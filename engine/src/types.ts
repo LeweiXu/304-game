@@ -148,7 +148,7 @@ export type GameEnd =
       kind: 'caps';
       seat: Seat | null;
       team: Team;
-      result: 'correct' | 'late' | 'early' | 'wrong';
+      result: 'correct' | 'late' | 'wrong';
       order: Card[] | null;
       round: number;
       bid: HighBid;

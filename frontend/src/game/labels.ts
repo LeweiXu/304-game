@@ -41,8 +41,7 @@ export function endSummary(end: GameEnd): string {
         case 'late': return end.seat === null
           ? `${who} took every round without calling caps, though they had the chance. Late caps: ${pays}`
           : `${who} called caps, but could have called it earlier. Late caps: ${pays}`;
-        case 'early': return `${who} called caps before the sweep was certain. Early caps: ${pays}`;
-        case 'wrong': return `${who} called caps with an order that doesn't guarantee every round. Wrong caps: ${pays}`;
+        case 'wrong': return `${who} called caps, but the declared order doesn't guarantee every round. Wrong caps: ${pays}`;
       }
     }
     case 'played': {

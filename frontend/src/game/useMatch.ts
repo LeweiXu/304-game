@@ -8,7 +8,7 @@ import {
 import { naiveBot } from '@bots/naive';
 import { HUMAN } from './labels';
 
-const STORAGE_KEY = '304-match-v3'; // bump when MatchState changes shape (v3: rules, PCC, penalties)
+const STORAGE_KEY = '304-match-v4'; // bump when MatchState changes shape (v4: caps / balance bookkeeping)
 const BOT_DELAY = { bid: 700, choose: 600, play: 650 };
 
 function load(): MatchState | null {
@@ -16,7 +16,9 @@ function load(): MatchState | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const m = JSON.parse(raw) as MatchState;
-    return m && m.game && Array.isArray(m.game.hands) ? m : null;
+    // Anything saved by an older version (missing fields) is dropped rather than crashing the page.
+    const ok = m && m.rules && m.game && Array.isArray(m.game.hands) && Array.isArray(m.game.capsFirst) && Array.isArray(m.game.balanceCalled);
+    return ok ? m : null;
   } catch {
     return null;
   }

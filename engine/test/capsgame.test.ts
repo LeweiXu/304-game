@@ -61,13 +61,13 @@ describe('caps', () => {
     expect(done.game.end).toMatchObject({ result: 'late', giver: 1, stone: 3 });
   });
 
-  it('early caps: no order guarantees the sweep, 5 stone', () => {
+  it('wrong caps: no order guarantees the sweep, 5 stone', () => {
     const m = position(['Jc 9c Ac 10c', 'Jh 9h Ah 10h', 'Jd 9d Ad 10d', 'Js 9s As 10s']);
     const done = apply(m, { type: 'caps' });
-    expect(done.game.end).toMatchObject({ result: 'early', giver: 1, stone: 5 });
+    expect(done.game.end).toMatchObject({ result: 'wrong', giver: 1, stone: 5 });
   });
 
-  it('wrong caps: an order exists, but not the one declared, 5 stone', () => {
+  it('wrong caps also covers a bad declared order when a good one existed, 5 stone', () => {
     // Lead Jh 9h to pull Ah / 10h (9 outranks A), then Jc 9c are top clubs. Leading clubs first can be cut.
     const hands = ['Jh 9h Jc 9c', 'Ah 10h Ac 10c', 'Jd 9d Ad 10d', 'Js 9s As 10s'];
     expect(apply(position(hands), { type: 'caps', order: cards('Jh 9h Jc 9c') }).game.end).toMatchObject({ result: 'correct' });

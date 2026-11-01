@@ -333,11 +333,11 @@ function trackOpportunities(m: MatchState) {
 }
 
 /** Caps outcomes in stone (rules.md, Caps): [giving team, amount]. */
-function capsStone(g: GameState, team: Team, result: 'correct' | 'late' | 'early' | 'wrong', beforeRound7: boolean): [Team, number] {
+function capsStone(g: GameState, team: Team, result: 'correct' | 'late' | 'wrong', beforeRound7: boolean): [Team, number] {
   const bid = contract(g)!;
   const bidTeam = teamOf(bid.seat);
   const [win, loss] = stoneAtStake(bid.value);
-  if (result === 'early' || result === 'wrong') return [otherTeam(team), 5]; // the caller's team "receives" 5
+  if (result === 'wrong') return [otherTeam(team), 5]; // the caller's team "receives" 5
   const bonus = result === 'correct' && beforeRound7 ? 1 : 0;
   if (team === bidTeam) {
     return result === 'correct' ? [bidTeam, win + bonus] : [otherTeam(bidTeam), loss + 1];
@@ -346,7 +346,7 @@ function capsStone(g: GameState, team: Team, result: 'correct' | 'late' | 'early
   return result === 'correct' ? [team, loss + bonus] : [bidTeam, win + 1];
 }
 
-function endWithCaps(m: MatchState, seat: Seat | null, team: Team, result: 'correct' | 'late' | 'early' | 'wrong', order: Card[] | null) {
+function endWithCaps(m: MatchState, seat: Seat | null, team: Team, result: 'correct' | 'late' | 'wrong', order: Card[] | null) {
   const g = m.game;
   const bid = contract(g)!;
   const round = g.play!.round;
@@ -366,8 +366,8 @@ function judgeCaps(m: MatchState, declared: Card[] | null) {
   const order = declared ?? (Array.isArray(found) ? found : sortHand(remainingCards(g, seat)));
   const sure = declared ? orderGuarantees(view, declared, JUDGE_BUDGET) : found !== null;
   if (sure === false) {
-    // No order works at all: early. Some order works but not the one declared: wrong.
-    return endWithCaps(m, seat, team, found === null ? 'early' : 'wrong', order);
+    // The declared order doesn't guarantee the sweep (whether or not some other order would have): wrong caps.
+    return endWithCaps(m, seat, team, 'wrong', order);
   }
   // Guaranteed (or too big to refute: benefit of the doubt). Late if this player had an earlier chance.
   const first = g.capsFirst[seat];
