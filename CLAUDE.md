@@ -11,7 +11,9 @@ frontend/     React + Vite + TS site: play page (game frame), rules page, themes
   vercel.json, .env.*   Vercel config, API base url per environment
 backend/      FastAPI app (main.py). Health check only until multiplayer.
   304-api.service   systemd user unit installed on the homeserver
-engine/       rules engine + bots, pure TS, no runtime deps. The frontend imports it as `@engine`. See engine/README.md
+engine/       rules engine, pure TS, no runtime deps. The frontend imports it as `@engine`. See engine/README.md
+bots/         bots (naive.ts) + RL env: observation encoder, batched VecEnv, Node env server, Python client in bots/python. Frontend imports bots as `@bots`. See bots/README.md
+public/       304-project-overview.md: repo briefing for RL planning. Keep it in sync when the engine API, action space, observation or env change.
 deploy.sh     pushes backend/ to the homeserver, installs deps, restarts it
 docs/rules/   the rules. Source of truth for the engine and for the rules page.
 docs/DEPLOYMENT.md   how the hosting fits together
@@ -23,7 +25,7 @@ docs/DEPLOYMENT.md   how the hosting fits together
 - Look and feel comes from the original site in the fork: Crimson Pro body, Inter headings, house-rule badges, § tags. Four colour themes (graphite default, parchment, tea, indigo), each with light and dark; users pick in the nav.
 - The rules page renders `docs/rules/rules.md` directly, so rules changes are markdown edits.
 - The play page will be a box for the game inside that site shell. Its design is still open.
-- Bots: `engine/src/bots/naive.ts` is the placeholder. Later the plan is RL-trained agents at several difficulty levels, so the engine has to stay usable as a training environment (see below).
+- Bots: `bots/src/naive.ts` is the placeholder. Next: RL-trained agents at several difficulty levels, trained in Python against `bots/` (Node env server, numpy client). Training most likely on the dev machine (RTX 5070).
 - Not implemented yet: caps, PCC, absolute hand, Spoilt Trumps calls, penalties. Games always play all 8 rounds.
 
 ## Rules are the source of truth
@@ -49,7 +51,7 @@ If code and these docs disagree, the docs win, or we change the docs on purpose 
 - Backend: homeserver (`homeserver` ssh alias) at `~/304_Project`, systemd user service `304-api` on port 8003, exposed as https://304-api.leweixu.com through the shared Cloudflare tunnel. Deploy with `./deploy.sh`. Python 3.12 venv at `~/venv-304`, config in `~/304-api.env`.
 - Same setup as the logarium and webnovels projects in `~/personal_projects/`. Details in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-Local dev: backend `uvicorn main:app --reload --port 8003` from the `~/venvs/304-venv` venv, frontend `npm run dev` (port 5173). Tests: `npm test` in engine and frontend, `pytest` in backend. See the README.
+Local dev: backend `uvicorn main:app --reload --port 8003` from the `~/venvs/304-venv` venv, frontend `npm run dev` (port 5173). Tests: `npm test` in engine, bots and frontend; `pytest` in backend and bots/python (venv `~/venvs/304-bots`, needs `npm run build` in bots first). See the README.
 
 ## Working here
 
