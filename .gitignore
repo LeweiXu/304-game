@@ -35,3 +35,4 @@ engine/bench/.out/
 # bots: built env server, Python packaging
 bots/dist/
 *.egg-info/
+CLAUDE.md

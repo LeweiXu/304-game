@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import rulesMd from '../../../docs/rules/rules.md?raw';
+import rulesMd from '../../../public/rules.md?raw';
 import { renderRules } from '../rules/renderRules';
 import RefCards from '../rules/RefCards';
 import '../styles/rules.css';

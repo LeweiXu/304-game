@@ -19,7 +19,7 @@ src/api.ts             backend base url (VITE_API_BASE) + health check
 src/components/        Nav, ThemeMenu
 src/pages/             PlayPage (hosts the game table), RulesPage, NotFound
 src/game/              the game table: useMatch (state, bot pacing, saving), Table, Controls, Card
-src/rules/             renders ../docs/rules/rules.md into the rules page
+src/rules/             renders ../public/rules.md into the rules page
 src/theme/theme.ts     colour theme + light/dark mode state
 src/styles/themes.css  the four colour themes, light and dark tokens each
 src/styles/base.css    type, nav, theme menu
@@ -33,7 +33,7 @@ Layout follows the old site's table: stone top-left, partner on top, opponents l
 
 ## Rules page
 
-The page is built from `docs/rules/rules.md` at build time (imported with `?raw`), so editing the markdown is all it takes to change the rules. `src/rules/renderRules.ts` dresses up a few markdown conventions: `**[House Rule]**` becomes a badge, `**§B-1 Title.**` becomes a linkable rule tag, `> **Worked Example ...**` quotes become collapsible blocks, and the card point table becomes a row of mini cards. The three reference cards at the top (`RefCards.tsx`) are hand-written, so update them if the scoring or bidding numbers in the markdown change.
+The page is built from `public/rules.md` at build time (imported with `?raw`), so editing the markdown is all it takes to change the rules. `src/rules/renderRules.ts` dresses up a few markdown conventions: `**[House Rule]**` becomes a badge, `**§B-1 Title.**` becomes a linkable rule tag, `> **Worked Example ...**` quotes become collapsible blocks, and the card point table becomes a row of mini cards. The three reference cards at the top (`RefCards.tsx`) are hand-written, so update them if the scoring or bidding numbers in the markdown change.
 
 ## Themes
 

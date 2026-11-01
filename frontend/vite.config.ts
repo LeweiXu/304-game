@@ -11,7 +11,7 @@ export default defineConfig({
       '@bots': fileURLToPath(new URL('../bots/src', import.meta.url)),
     },
   },
-  // The rules page imports ../docs/rules/rules.md and the engine sits in ../engine.
+  // The rules page imports ../public/rules.md and the engine sits in ../engine.
   server: { fs: { allow: ['..'] } },
   test: { environment: 'jsdom' },
 });

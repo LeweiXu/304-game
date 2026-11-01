@@ -11,4 +11,4 @@ python3 -m venv ~/venvs/304-venv
 ~/venvs/304-venv/bin/python -m pytest
 ```
 
-Config is environment variables only: `CORS_ORIGINS` (comma separated, defaults to the live site plus localhost:5173). Deploy with `../deploy.sh`; the server side is described in `../docs/DEPLOYMENT.md`.
+Config is environment variables only: `CORS_ORIGINS` (comma separated, defaults to the live site plus localhost:5173). Deploy with `../deploy.sh`; the server side is described in `../public/DEPLOYMENT.md`.

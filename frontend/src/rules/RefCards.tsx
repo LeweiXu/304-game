@@ -1,6 +1,6 @@
 // The three quick-reference panels at the top of the rules page, styled as
 // playing cards. Numbers here mirror the scoring and bidding sections of
-// docs/rules/rules.md; update both together.
+// public/rules.md; update both together.
 
 type Row = [string, string];
 type Card = { rank: string; suit: string; red?: boolean; title: string; rows: Row[]; link?: [string, string] };

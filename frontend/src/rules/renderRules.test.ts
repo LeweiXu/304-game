@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import md from '../../../docs/rules/rules.md?raw';
+import md from '../../../public/rules.md?raw';
 import { renderRules, slugify } from './renderRules';
 
 

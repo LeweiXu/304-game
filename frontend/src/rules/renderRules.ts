@@ -1,4 +1,4 @@
-// Turns docs/rules/rules.md into the sections the rules page shows.
+// Turns public/rules.md into the sections the rules page shows.
 //
 // The markdown stays the source of truth. A few of its conventions get
 // dressed up on the way through:

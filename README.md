@@ -8,8 +8,7 @@ You can play full matches against a simple rule-based bot. Caps and PCC aren't i
 - `bots/` - the bots, plus the batched RL training environment (TypeScript env server + Python client)
 - `frontend/` - the React site (play page, rules page, themes)
 - `backend/` - FastAPI server on the homeserver, health check only for now
-- `docs/rules/` - the house rules and the formal specs the engine has to follow
-- `public/304-project-overview.md` - a briefing on the whole repo for planning the RL bots (engine API, action space, observation layout, env, hardware)
+- `public/` - the docs: `rules.md` (house rules), `play_invariants.md` and `caps_formalism.md` (formal specs the engine follows), `DEPLOYMENT.md` (hosting), and `304-project-overview.md` (a briefing on the whole repo for planning the RL bots)
 
 ## Running it locally
 
@@ -50,7 +49,7 @@ python3 -m venv ~/venvs/304-bots
 - Frontend: Vercel, https://304.leweixu.com, deploys on push to `main`.
 - Backend: the homeserver at `~/304_Project` (venv at `~/venv-304`), systemd user service `304-api` on port 8003, public at https://304-api.leweixu.com through the Cloudflare tunnel. Deploy with `./deploy.sh`.
 
-Full runbook (Cloudflare, Vercel setup, service commands, checks): [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Full runbook (Cloudflare, Vercel setup, service commands, checks): [public/DEPLOYMENT.md](public/DEPLOYMENT.md).
 
 ## License
 

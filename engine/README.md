@@ -36,7 +36,7 @@ Everything goes through four functions in `src/game.ts`:
 
 The bots and the RL training environment live in `../bots`.
 
-Rule numbers in comments and tests (`§B-4`, `§T-6`) point at `docs/rules/rules.md`.
+Rule numbers in comments and tests (`§B-4`, `§T-6`) point at `public/rules.md`.
 
 ## Not implemented yet
 

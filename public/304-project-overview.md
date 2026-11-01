@@ -17,7 +17,7 @@ bots/       the bots and the RL training environment
   python/     Python client for the env (numpy only so far)
 frontend/   React + Vite website (rules page, game table). Deployed on Vercel.
 backend/    FastAPI on a home server. Only a health check today; multiplayer later.
-docs/rules/ rules.md (house rules), play_invariants.md, caps_formalism.md
+public/     docs: rules.md, play_invariants.md, caps_formalism.md, DEPLOYMENT.md, this file
 ```
 
 The engine is the single source of truth for the rules. The website, the bots and the training environment all call it; nothing re-implements rules.

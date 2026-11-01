@@ -1,4 +1,4 @@
-// Betting on 4 and 8 cards. Rule numbers refer to docs/rules/rules.md.
+// Betting on 4 and 8 cards. Rule numbers refer to public/rules.md.
 // Functions here work on a draft GameState that game.ts has already copied.
 import { handPoints } from './cards';
 import { nextSeat, partnerOf, type Seat } from './seats';
