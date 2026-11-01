@@ -9,7 +9,7 @@ This repo started as a fork of a friend's 304 project. That code is gone; only t
 ```
 frontend/     browser app: UI, rules engine, bots. Everything needed for bot games.
   public/     static assets Vite serves as-is (card art, fonts, favicon)
-  vercel.json, .env.production   Vercel config, API base url
+  vercel.json, .env.*   Vercel config, API base url per environment
 backend/      multiplayer server. Just a health check until we do multiplayer.
   304-api.service   systemd user unit installed on the homeserver
 deploy.sh     pushes backend/ to the homeserver and restarts it
@@ -36,8 +36,10 @@ If code and these docs disagree, the docs win, or we change the docs on purpose 
 ## Hosting
 
 - Frontend: Vercel, root dir `frontend/`, at https://304.leweixu.com. Deploys on push to `main`.
-- Backend: homeserver (`homeserver` ssh alias), systemd user service `304-api` on port 8003, exposed as https://304-api.leweixu.com through the shared Cloudflare tunnel. Deploy with `./deploy.sh`. Node 18 on the server.
+- Backend: homeserver (`homeserver` ssh alias) at `~/304_Project`, systemd user service `304-api` on port 8003, exposed as https://304-api.leweixu.com through the shared Cloudflare tunnel. Deploy with `./deploy.sh`. Node 18 on the server.
 - Same setup as the logarium and webnovels projects in `~/personal_projects/`. Details in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+Local dev: `node backend/server.mjs` (port 8003); frontend `npm run dev` in `frontend/` once scaffolded (port 5173). See the README.
 
 ## Working here
 
