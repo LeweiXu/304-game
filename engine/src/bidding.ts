@@ -2,7 +2,7 @@
 // Functions here work on a draft GameState that game.ts has already copied.
 import { handPoints } from './cards';
 import { nextSeat, partnerOf, type Seat } from './seats';
-import type { Action, Bidding, GameState } from './types';
+import type { Action, Bidding, GameState, Speech } from './types';
 
 export const MIN_BID_4 = 160;
 export const MIN_BID_8 = 220; // "Honest" (house rule)
@@ -68,6 +68,12 @@ function canRedeal(g: GameState, s: Seat): boolean {
   return eligible && handPoints(g.hands[s]) < REDEAL_UNDER;
 }
 
+function record(g: GameState, speech: Speech) {
+  if (speech.inSeat === undefined) delete speech.inSeat;
+  g.bidding.speeches.push(speech);
+  g.auction.push(speech);
+}
+
 /** Applies a bet, pass or partner call. Returns true once bidding is over. */
 export function applySpeech(g: GameState, action: Action): boolean {
   const b = g.bidding;
@@ -75,7 +81,7 @@ export function applySpeech(g: GameState, action: Action): boolean {
   const inSeat = s !== b.turn ? b.turn : undefined;
 
   if (action.type === 'partner') {
-    b.speeches.push({ seat: s, action: 'partner' });
+    record(g, { stage: b.stage, seat: s, action: 'partner' });
     b.spoken[s] = true;
     b.partneredBy = s;
     b.speaker = partnerOf(s); // partner speaks right now, in s's seat
@@ -86,10 +92,10 @@ export function applySpeech(g: GameState, action: Action): boolean {
   if (action.type === 'bid') {
     b.high = { seat: s, value: action.value };
     b.passes = 0; // §B-5
-    b.speeches.push({ seat: s, action: 'bid', value: action.value, inSeat });
+    record(g, { stage: b.stage, seat: s, action: 'bid', value: action.value, inSeat });
   } else {
     b.passes += 1;
-    b.speeches.push({ seat: s, action: 'pass', inSeat });
+    record(g, { stage: b.stage, seat: s, action: 'pass', inSeat });
   }
   b.spoken[s] = true;
 

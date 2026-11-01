@@ -29,7 +29,11 @@ export function playState(opts: {
   g.hands = opts.hands.map((h) => [...h]);
   g.stock = [];
   g.bid4 = { seat: opts.trumpSeat, value: opts.bid ?? 160 };
-  g.trump = { seat: opts.trumpSeat, suit: opts.suit, indicator: opts.indicator ?? null, open: opts.open ?? false, mustLeadTrump: false };
+  const folded = opts.indicator ?? (`J${opts.suit}` as Card);
+  g.trump = {
+    seat: opts.trumpSeat, suit: opts.suit, indicator: opts.indicator ?? null, folded,
+    open: opts.open ?? false, declaredOpen: opts.open ?? false, foldedPublic: opts.open ?? false, mustLeadTrump: false,
+  };
   g.play = newPlay(g);
   g.phase = 'play';
   return m;

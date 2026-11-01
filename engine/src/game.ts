@@ -32,6 +32,7 @@ function deal(number: number, dealer: Seat, rngState: number): { game: GameState
       hands,
       stock: deck.slice(16),
       bidding: newBidding(4, dealer),
+      auction: [],
       bid4: null,
       bid8: null,
       trump: null,
@@ -158,6 +159,7 @@ export function cloneMatch(m: MatchState): MatchState {
       hands: g.hands.map((h) => [...h]),
       stock: [...g.stock],
       bidding: { ...b, spoken: [...b.spoken], skipOnce: [...b.skipOnce], speeches: [...b.speeches] },
+      auction: [...g.auction],
       trump: g.trump && { ...g.trump },
       play: g.play && {
         ...g.play,
@@ -193,7 +195,7 @@ function endBidding(m: MatchState) {
 function chooseTrump(g: GameState, card: GameState['hands'][number][number]) {
   const seat = toAct(g)!;
   g.hands[seat] = g.hands[seat].filter((c) => c !== card);
-  g.trump = { seat, suit: suitOf(card), indicator: card, open: false, mustLeadTrump: false };
+  g.trump = { seat, suit: suitOf(card), indicator: card, folded: card, open: false, declaredOpen: false, foldedPublic: false, mustLeadTrump: false };
   if (g.phase === 'trump4') {
     for (let i = 0; i < 4; i++) {
       const s = nextSeat(g.dealer, i + 1);
@@ -213,11 +215,15 @@ function declare(g: GameState, open: boolean) {
   g.phase = 'play';
   if (!open) return;
   // Open trump: the folded card goes back into the trumper's hand and the suit is known.
-  // A trumper who also has priority must then lead trump in round 1.
+  // A trumper with priority must then lead trump in round 1 (the lead is the reveal).
+  // Otherwise they show a trump card to the table. The rules allow any trump card;
+  // the engine always shows the folded one, so that card becomes public.
   g.hands[t.seat].push(t.indicator!);
   t.indicator = null;
   t.open = true;
+  t.declaredOpen = true;
   t.mustLeadTrump = g.play.leader === t.seat;
+  t.foldedPublic = !t.mustLeadTrump;
 }
 
 function score(m: MatchState) {

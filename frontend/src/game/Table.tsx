@@ -128,7 +128,11 @@ function Center({ view, pausing, onContinue }: { view: PlayerView; pausing: bool
   if (p) {
     const showLast = pausing && p.lastTrick;
     const cards = showLast ? p.lastTrick!.cards : p.trick;
-    const hidden = showLast && p.lastTrick!.cards.some((c) => c.faceDown && !c.revealed);
+    const hidden = showLast && p.lastTrick!.cards.some((c) => c.card === null);
+    // As trumper you privately inspect folded cards after each trick (they stay face down on the table).
+    const inspected = showLast && view.trump?.seat === HUMAN
+      ? p.lastTrick!.cards.filter((c) => c.faceDown && !c.revealed && c.seat !== HUMAN && c.card)
+      : [];
     return (
       <div className="center">
         <p className="center-label">
@@ -141,6 +145,9 @@ function Center({ view, pausing, onContinue }: { view: PlayerView; pausing: bool
             {SEAT_NAMES[p.lastTrick!.winner]} {p.lastTrick!.winner === HUMAN ? 'win' : 'wins'} the trick, +{p.lastTrick!.visiblePoints}{hidden ? ' plus folded cards' : ''}
             {p.lastTrick!.revealedTrump && view.trump?.suit && <span>. Trump is {SUIT_SYMBOL[view.trump.suit]} {SUIT_NAME[view.trump.suit]}</span>}
           </p>
+        )}
+        {inspected.length > 0 && (
+          <p className="center-wait">You check the folded cards: {inspected.map((c) => `${SEAT_NAMES[c.seat]} ${c.card!.slice(0, -1)}${SUIT_SYMBOL[c.card!.slice(-1) as 'c']}`).join(', ')}</p>
         )}
         {showLast && <button type="button" className="btn primary" onClick={onContinue} autoFocus>Continue</button>}
       </div>

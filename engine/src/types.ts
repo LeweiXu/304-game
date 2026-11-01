@@ -25,6 +25,7 @@ export type Action =
 export interface HighBid { seat: Seat; value: number }
 
 export interface Speech {
+  stage: 4 | 8; // which betting round
   seat: Seat; // who spoke
   action: 'bid' | 'pass' | 'partner';
   value?: number;
@@ -52,8 +53,14 @@ export interface TrumpState {
   suit: Suit;
   /** The face-down trump card while it's still on the table, else null. */
   indicator: Card | null;
+  /** The card the trumper placed face down. Stays set after it's picked up or played. */
+  folded: Card;
   /** Open trump declared, or closed trump revealed by a cut. */
   open: boolean;
+  /** Trump was declared open before play (rather than revealed by a cut). */
+  declaredOpen: boolean;
+  /** Everyone has seen which card was folded: it was flipped on a reveal, shown on an open declaration, or played face up. */
+  foldedPublic: boolean;
   /** Open trump declared by a trumper with priority: round 1 must be led with trump. */
   mustLeadTrump: boolean;
 }
@@ -108,6 +115,8 @@ export interface GameState {
   /** The 16 cards waiting for the second deal. */
   stock: Card[];
   bidding: Bidding;
+  /** Every speech of both betting rounds, in order. */
+  auction: Speech[];
   bid4: HighBid | null;
   bid8: HighBid | null;
   trump: TrumpState | null;

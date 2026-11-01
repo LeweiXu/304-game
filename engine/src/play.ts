@@ -71,7 +71,7 @@ export function applyPlay(g: GameState, card: Card): boolean {
 
   if (seat === t.seat && card === t.indicator) {
     t.indicator = null;
-    if (!option.faceDown) t.open = true; // played face up as the last card: that's a reveal
+    if (!option.faceDown) { t.open = true; t.foldedPublic = true; } // played face up as the last card: a reveal
   } else {
     g.hands[seat] = g.hands[seat].filter((c) => c !== card);
   }
@@ -94,6 +94,7 @@ function resolveTrick(g: GameState) {
   if (foldedTrumps.length && !t.open) {
     revealedTrump = true;
     t.open = true;
+    t.foldedPublic = true; // the folded card is flipped face up for everyone
     if (t.indicator) {
       g.hands[t.seat].push(t.indicator); // shown, then picked up into the trumper's hand
       t.indicator = null;
