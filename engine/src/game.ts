@@ -13,7 +13,7 @@ import { viewFor } from './view';
 
 /** Node budgets for the caps solver: small when checking every turn for a missed chance, big when judging a call.
  * Bots should search with TRACK_BUDGET too, so they never miss a chance the engine would hold against them. */
-export const TRACK_BUDGET = 50_000;
+export const TRACK_BUDGET = 20_000;
 const JUDGE_BUDGET = 2_000_000;
 
 export const START_STONE = 10;

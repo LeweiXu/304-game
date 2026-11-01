@@ -6,11 +6,14 @@ import type { RuleOptions } from '@engine';
 export interface Settings extends RuleOptions {
   /** Show points per trick and running team totals. */
   assist: boolean;
+  /** Little explanations on the table: what to do now, why a card goes face down, and so on. */
+  hints: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   shuffle: 'random',
   assist: false,
+  hints: false,
   caps: true,
   claimBalance: false,
   claimThreshold: false,

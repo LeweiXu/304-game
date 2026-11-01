@@ -11,9 +11,9 @@ import {
 import type { useMatch } from './useMatch';
 
 type Game = ReturnType<typeof useMatch>;
-type Props = { game: Game; assist: boolean; onSettings: () => void };
+type Props = { game: Game; assist: boolean; hints: boolean; onSettings: () => void };
 
-export default function Table({ game, assist, onSettings }: Props) {
+export default function Table({ game, assist, hints, onSettings }: Props) {
   const { view, pausing } = game;
   if (!view) return null;
   return (
@@ -21,14 +21,14 @@ export default function Table({ game, assist, onSettings }: Props) {
       <div className="table-top">
         <Scoreboard view={view} />
         <Opponent view={view} seat={2} />
-        <GameInfo view={view} assist={assist} onQuit={game.quit} onSettings={onSettings} />
+        <GameInfo view={view} assist={assist} hints={hints} onQuit={game.quit} onSettings={onSettings} />
       </div>
       <div className="table-middle">
         <Opponent view={view} seat={3} />
-        <Center view={view} pausing={pausing} assist={assist} onContinue={game.resume} />
+        <Center view={view} pausing={pausing} assist={assist} hints={hints} onContinue={game.resume} />
         <Opponent view={view} seat={1} />
       </div>
-      <Controls view={view} pausing={pausing} onAct={game.act} />
+      <Controls view={view} pausing={pausing} hints={hints} onAct={game.act} />
       {view.phase === 'over' && !pausing && <Result view={view} onNext={game.deal} onNewMatch={game.start} />}
     </div>
   );
@@ -50,13 +50,13 @@ function Scoreboard({ view }: { view: PlayerView }) {
   );
 }
 
-function GameInfo({ view, assist, onQuit, onSettings }: { view: PlayerView; assist: boolean; onQuit: () => void; onSettings: () => void }) {
+function GameInfo({ view, assist, hints, onQuit, onSettings }: { view: PlayerView; assist: boolean; hints: boolean; onQuit: () => void; onSettings: () => void }) {
   const bid = view.contract;
   const t = view.trump;
   let trump = 'not chosen';
   if (t?.suit) {
     trump = `${SUIT_SYMBOL[t.suit]} ${SUIT_NAME[t.suit]}`;
-    if (!t.open) trump += ' (only you know)';
+    if (!t.open) { if (hints) trump += ' (only you know)'; }
     else if (t.shown) trump += ` (${SEAT_NAMES[t.seat]} showed ${cardLabel(t.shown)})`;
   } else if (t) trump = 'face down';
   return (
@@ -137,7 +137,7 @@ function TrickCards({ cards }: { cards: SeenCard[] }) {
   );
 }
 
-function Center({ view, pausing, assist, onContinue }: { view: PlayerView; pausing: boolean; assist: boolean; onContinue: () => void }) {
+function Center({ view, pausing, assist, hints, onContinue }: { view: PlayerView; pausing: boolean; assist: boolean; hints: boolean; onContinue: () => void }) {
   const p = view.play;
   // Between rounds you may inspect the last completed trick (rules: never mid-trick, never older tricks).
   const [inspecting, setInspecting] = useState(false);
@@ -177,7 +177,7 @@ function Center({ view, pausing, assist, onContinue }: { view: PlayerView; pausi
         {inspected.length > 0 && (
           <p className="center-wait">You check the folded cards: {inspected.map((c) => `${SEAT_NAMES[c.seat]} ${cardLabel(c.card!)}`).join(', ')}</p>
         )}
-        <Notices view={view} />
+        <Notices view={view} hints={hints} />
         {pausing && showLast && <button type="button" className="btn primary" onClick={onContinue} autoFocus>Continue</button>}
       </div>
     );
@@ -211,12 +211,12 @@ function Center({ view, pausing, assist, onContinue }: { view: PlayerView; pausi
   );
 }
 
-/** Penalties so far this game (from wrong Spoilt Trumps calls). */
-function Notices({ view }: { view: PlayerView }) {
+/** Penalties so far this game (wrong claim-balance calls). */
+function Notices({ view, hints }: { view: PlayerView; hints: boolean }) {
   if (!view.penalties.length) return null;
   return (
     <div className="notices">
-      {view.penalties.map((pen, i) => <p key={i} className="center-wait">{penaltySummary(pen)} (settled at the end of the game)</p>)}
+      {view.penalties.map((pen, i) => <p key={i} className="center-wait">{penaltySummary(pen)}{hints ? ' (settled at the end of the game)' : ''}</p>)}
     </div>
   );
 }
@@ -228,6 +228,7 @@ function Result({ view, onNext, onNewMatch }: { view: PlayerView; onNext: () => 
   if (end.kind === 'played') heading = end.made === (end.bidTeam === 0) ? 'Your team wins this game' : 'Your team loses this game';
   else if (end.kind === 'redeal') heading = 'Redeal';
   else if (end.kind === 'spoilt') heading = 'Spoilt Trumps';
+  else if (end.kind === 'caps') heading = end.result === 'correct' ? (end.team === 0 ? 'Caps!' : 'Caps against you') : `${end.result[0].toUpperCase()}${end.result.slice(1)} caps`;
   else if (end.kind === 'absolute') heading = 'Absolute hand';
   if (matchOver) heading = view.matchWinner === 0 ? 'You won the match' : 'East and West won the match';
   return (

@@ -32,7 +32,19 @@ export function endSummary(end: GameEnd): string {
     case 'absolute': return end.how === 'goodwill'
       ? `${SEAT_NAMES[end.seat]} declared an absolute hand (all eight trumps). Goodwill: the deal passes on, no stone changes hands.`
       : `${SEAT_NAMES[end.seat]} held all eight trumps, so the other side claims an absolute hand: the game becomes a pass-on.`;
-    case 'spoilt': return `${SEAT_NAMES[end.seat]} called Spoilt Trumps correctly: the trumping team's opponents were dealt no trumps. The game is void.`;
+    case 'spoilt': return "Spoilt Trumps: the trumping team's opponents were dealt no trumps. The same dealer deals again.";
+    case 'caps': {
+      const who = end.seat === null ? teamName(end.team) : SEAT_NAMES[end.seat];
+      const pays = `${teamName(end.giver)} give away ${end.stone} stone.`;
+      switch (end.result) {
+        case 'correct': return `${who} called caps at the first chance${end.round <= 6 ? ', before round 7, so with a bonus' : ''}. ${pays}`;
+        case 'late': return end.seat === null
+          ? `${who} took every round without calling caps, though they had the chance. Late caps: ${pays}`
+          : `${who} called caps, but could have called it earlier. Late caps: ${pays}`;
+        case 'early': return `${who} called caps before the sweep was certain. Early caps: ${pays}`;
+        case 'wrong': return `${who} called caps with an order that doesn't guarantee every round. Wrong caps: ${pays}`;
+      }
+    }
     case 'played': {
       const who = teamName(end.bidTeam);
       if (end.pcc) {
@@ -49,7 +61,10 @@ export function endSummary(end: GameEnd): string {
 }
 
 export function penaltySummary(p: Penalty): string {
-  return `${SEAT_NAMES[p.seat]} called Spoilt Trumps wrongly: ${teamName(1 - (p.seat % 2))} give away ${p.stone} stone.`;
+  const why = p.reason === 'balanceWrong' ? 'claimed the balance wrongly'
+    : p.reason === 'balanceLate' ? 'claimed the balance late'
+      : 'missed a chance to claim the balance';
+  return `${SEAT_NAMES[p.seat]} ${why}: ${teamName(1 - (p.seat % 2))} give away ${p.stone} stone.`;
 }
 
 export const cardLabel = (c: Card) => `${c.slice(0, -1)}${SUIT_SYMBOL[c.slice(-1) as Suit]}`;

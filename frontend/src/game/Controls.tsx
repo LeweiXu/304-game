@@ -1,33 +1,38 @@
 // Your seat: what to do now, the bidding panel, calls, and your hand.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { handPoints, sortHand, suitOf, type Action, type Card as CardId, type PlayerView } from '@engine';
 import { Card } from './Card';
 import { bidLabel, HUMAN, SEAT_NAMES, SUIT_NAME, SUIT_SYMBOL } from './labels';
 
-type Props = { view: PlayerView; pausing: boolean; onAct: (a: Action) => void };
+type Props = { view: PlayerView; pausing: boolean; hints: boolean; onAct: (a: Action) => void };
 
-export default function Controls({ view, pausing, onAct }: Props) {
+export default function Controls({ view, pausing, hints, onAct }: Props) {
   const myTurn = view.toAct === HUMAN && !pausing && view.phase !== 'over';
   const legal = myTurn ? view.legal : [];
   const has = (type: Action['type']) => legal.some((a) => a.type === type);
-  // Clicking a card means: choose it as trump, show it, or play it, depending on the phase.
-  const cardAction = new Map<CardId, Action>();
-  for (const a of legal) if (a.type === 'trump' || a.type === 'show' || a.type === 'play') cardAction.set(a.card, a);
   const indicator = view.trump?.indicator ?? null; // only set when you're the trumper and it's on the table
   const hand = sortHand(view.hand);
+  const allMine = indicator ? [...hand, indicator] : hand;
+
+  // Declaring caps: click your cards in the order you'll play them, then confirm.
+  const [capsOrder, setCapsOrder] = useState<CardId[] | null>(null);
+  useEffect(() => { if (!has('caps')) setCapsOrder(null); }); // the chance is gone (or it's not your turn)
+
+  // Clicking a card means: choose it as trump, show it, play it, or add it to a caps order.
+  const cardAction = new Map<CardId, Action>();
+  for (const a of legal) if (a.type === 'trump' || a.type === 'show' || a.type === 'play') cardAction.set(a.card, a);
+  const clickable = (c: CardId) => (capsOrder ? !capsOrder.includes(c) : cardAction.has(c));
+  const click = (c: CardId) => {
+    if (capsOrder) setCapsOrder([...capsOrder, c]);
+    else onAct(cardAction.get(c)!);
+  };
+  const badge = (c: CardId) => (capsOrder && capsOrder.includes(c) ? capsOrder.indexOf(c) + 1 : undefined);
 
   return (
     <div className="you">
       <div className="you-bar">
         <SeatTag view={view} />
-        <p className="prompt">{prompt(view, myTurn, pausing)}</p>
-        {has('spoilt') && (
-          <button type="button" className="link-btn"
-            title="Void the game if the trumping team's opponents were dealt no trumps. A wrong call costs your team 1 stone."
-            onClick={() => { if (window.confirm('Call Spoilt Trumps? If the trumping team\'s opponents were dealt any trump, your team pays 1 stone.')) onAct({ type: 'spoilt' }); }}>
-            Spoilt Trumps?
-          </button>
-        )}
+        <p className="prompt">{capsOrder ? 'Click your cards in the order you will play them.' : prompt(view, myTurn, pausing, hints)}</p>
       </div>
       {myTurn && (view.phase === 'bid4' || view.phase === 'bid8') && (
         <BidPanel key={`${view.phase}-${view.bidding.speeches.length}`} view={view} onAct={onAct} />
@@ -42,23 +47,41 @@ export default function Controls({ view, pausing, onAct }: Props) {
       {myTurn && view.phase === 'show' && has('absolute') && (
         <div className="panel"><AbsoluteButton onAct={onAct} /></div>
       )}
-      {myTurn && view.phase === 'play' && has('claim') && (
+      {myTurn && view.phase === 'play' && capsOrder && (
         <div className="panel calls">
-          <button type="button" className="btn primary" onClick={() => onAct({ type: 'claim' })}
-            title="Your team has the points it needs: end the game now">Claim the game</button>
+          <button type="button" className="btn primary" disabled={capsOrder.length !== allMine.length}
+            onClick={() => { onAct({ type: 'caps', order: capsOrder }); setCapsOrder(null); }}>Confirm caps</button>
+          <button type="button" className="btn" disabled={!capsOrder.length} onClick={() => setCapsOrder(capsOrder.slice(0, -1))}>Undo</button>
+          <button type="button" className="btn subtle" onClick={() => setCapsOrder(null)}>Cancel</button>
+        </div>
+      )}
+      {myTurn && view.phase === 'play' && !capsOrder && (has('claim') || has('caps') || has('balance')) && (
+        <div className="panel calls">
+          {has('caps') && (
+            <button type="button" className="btn" onClick={() => setCapsOrder([])}
+              title="Your team wins every remaining round, whatever the others hold. Declare the order you'll play your cards.">Call caps</button>
+          )}
+          {has('balance') && (
+            <button type="button" className="btn" onClick={() => onAct({ type: 'balance' })}
+              title="Your team wins every remaining round. A wrong claim costs your team 1 stone.">Claim balance</button>
+          )}
+          {has('claim') && (
+            <button type="button" className="btn primary" onClick={() => onAct({ type: 'claim' })}
+              title="Your team has the points it needs: end the game now">Claim the game</button>
+          )}
         </div>
       )}
       <div className="hand-row">
-        <div className={`hand${cardAction.size ? ' choosing' : ''}`} aria-label="Your hand">
+        <div className={`hand${capsOrder ? ' ordering' : cardAction.size ? ' choosing' : ''}`} aria-label="Your hand">
           {hand.map((c) => (
-            <Card key={c} card={c} size="hand" onClick={() => onAct(cardAction.get(c)!)} disabled={!cardAction.has(c)} />
+            <Card key={c} card={c} size="hand" onClick={() => click(c)} disabled={!clickable(c)} badge={badge(c)} />
           ))}
         </div>
         {indicator && (
           <div className="indicator">
             <Card card={indicator} size="hand" tag="Trump" label={`Your folded trump card, ${indicator}`}
-              onClick={() => onAct(cardAction.get(indicator)!)} disabled={!cardAction.has(indicator)} />
-            <small>face down on the table</small>
+              onClick={() => click(indicator)} disabled={!clickable(indicator)} badge={badge(indicator)} />
+            {hints && <small>face down on the table</small>}
           </div>
         )}
       </div>
@@ -69,7 +92,7 @@ export default function Controls({ view, pausing, onAct }: Props) {
 function AbsoluteButton({ onAct }: { onAct: (a: Action) => void }) {
   return (
     <button type="button" className="btn" onClick={() => onAct({ type: 'absolute' })}
-      title="You hold all eight trumps. Declaring it in goodwill passes the deal on with no stone exchanged.">Declare absolute hand</button>
+      title="Your hand wins every round whatever happens. Declaring it in goodwill passes the deal on with no stone exchanged.">Declare absolute hand</button>
   );
 }
 
@@ -85,11 +108,22 @@ function SeatTag({ view }: { view: PlayerView }) {
   );
 }
 
-function prompt(view: PlayerView, myTurn: boolean, pausing: boolean): string {
+function prompt(view: PlayerView, myTurn: boolean, pausing: boolean, hints: boolean): string {
   if (view.phase === 'over') return '';
-  if (pausing) return 'Have a look at the trick, then click Continue.';
-  if (view.pccOut === HUMAN) return `You sit this game out: ${SEAT_NAMES[view.trump!.seat]} bid PCC.`;
-  if (!myTurn) return view.toAct !== null ? `Waiting for ${SEAT_NAMES[view.toAct]}` : '';
+  if (view.pccOut === HUMAN) return `You sit this game out (PCC).`;
+  if (pausing) return hints ? 'Have a look at the trick, then click Continue.' : '';
+  if (!myTurn) return hints && view.toAct !== null ? `Waiting for ${SEAT_NAMES[view.toAct]}` : '';
+  if (!hints) {
+    switch (view.phase) {
+      case 'bid4':
+      case 'bid8': return 'Your bid';
+      case 'trump4':
+      case 'trump8': return 'Choose trump';
+      case 'declare': return 'Open or closed?';
+      case 'show': return 'Show a trump';
+      default: return 'Your turn';
+    }
+  }
   switch (view.phase) {
     case 'bid4': return `Your bid. You hold ${handPoints(view.hand)} points in 4 cards.`;
     case 'bid8': return `Your 8-card bid. You hold ${handPoints(view.hand) + (view.trump?.indicator ? handPoints([view.trump.indicator]) : 0)} points.`;

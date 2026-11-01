@@ -34,14 +34,16 @@ export default function SettingsPanel({ settings, onChange, onClose, midGame }: 
           <legend>Display</legend>
           <Toggle checked={settings.assist} onChange={(v) => onChange({ assist: v })}
             title="Assistance" detail="Show the points won in each round and both teams' running totals." />
+          <Toggle checked={settings.hints} onChange={(v) => onChange({ hints: v })}
+            title="Hints" detail="Short explanations on the table: what to do on your turn, why a card goes face down, who knows the trump suit." />
         </fieldset>
 
         <fieldset>
           <legend>Rules</legend>
           <Toggle checked={settings.caps} onChange={(v) => onChange({ caps: v })}
-            title="Caps" detail="Turn off for easier games. Caps calls aren't in the game yet, so for now this is saved for when they are." />
-          <Toggle checked={settings.claimBalance} onChange={() => {}} disabled
-            title="Claim balance" detail="Coming soon. Once you know you'll win every remaining round you must claim it, or your team pays one stone." />
+            title="Caps" detail="Call caps, with the order you'll play your cards, once your team is sure to win every round. Late, early and wrong calls are penalised. Turn off for easier games." />
+          <Toggle checked={settings.claimBalance} onChange={(v) => onChange({ claimBalance: v })}
+            title="Claim balance" detail="Once you're sure your team wins every remaining round, claim it. Missing the claim costs your team one stone." />
           <Toggle checked={settings.claimThreshold} onChange={(v) => onChange({ claimThreshold: v })}
             title="Claim threshold" detail="Claim the game once your team has the points it needs (the bid, or 305 minus the bid for the other side). Claiming ends the game straight away." />
         </fieldset>

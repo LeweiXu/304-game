@@ -19,11 +19,12 @@
 
 /* cards */
 .card {
+  /* Classic card faces, the same in every theme. */
   position: relative; display: inline-block; flex: none; padding: 0; width: var(--cw); height: calc(var(--cw) * 1.4);
-  border-radius: calc(var(--cw) * .1); background: var(--elev); border: 1px solid var(--border);
-  box-shadow: 0 1px 2px var(--shadow); color: var(--text); font-family: var(--font-heading); text-align: left;
+  border-radius: calc(var(--cw) * .1); background: #fdfbf6; border: 1px solid #d3ccbd;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .35); color: #1c1c1e; font-family: var(--font-heading); text-align: left;
 }
-.card.red { color: var(--red); }
+.card.red { color: #c1262e; }
 .card-small { width: calc(var(--cw) * .58); height: calc(var(--cw) * .81); border-radius: calc(var(--cw) * .07); }
 .card-hand { width: calc(var(--cw) * 1.12); height: calc(var(--cw) * 1.57); }
 .card .corner { position: absolute; top: 5%; left: 9%; display: flex; flex-direction: column; align-items: center; line-height: 1; }
@@ -33,8 +34,14 @@
 .card .pip { position: absolute; right: 9%; bottom: 5%; font-size: calc(var(--cw) * .55); line-height: 1; }
 .card-hand .pip { font-size: calc(var(--cw) * .62); }
 .card.back {
-  background: repeating-linear-gradient(45deg, var(--accent) 0 3px, color-mix(in srgb, var(--accent) 55%, var(--elev)) 3px 6px);
-  border: 2px solid var(--elev); box-shadow: 0 0 0 1px var(--border);
+  /* A standard red lattice back with a white border, the same in every theme. */
+  background-color: #a8202a;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, .26) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, .26) 0 1px, transparent 1px 5px),
+    radial-gradient(circle at 50% 50%, #c22d37 0 30%, transparent 31%);
+  border: calc(var(--cw) * .05 + 1px) solid #fdfbf6;
+  box-shadow: inset 0 0 0 1px #8a1720, 0 1px 2px rgba(0, 0, 0, .35);
 }
 .card.tagged { box-shadow: 0 0 0 2px var(--accent), 0 2px 6px var(--shadow); }
 .card-tag {
@@ -178,3 +185,16 @@ button.card:disabled { cursor: default; }
 .player.sitting-out .backs { opacity: .35; }
 .notices { display: grid; gap: 2px; }
 .center-label .inspect { margin-left: 10px; font-size: .72rem; }
+.card-badge {
+  position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--surface); font-size: 11px; font-weight: 800;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
+}
+.btn:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+/* Declaring a caps order: cards already placed are lifted with their number, not dimmed. */
+.hand.ordering button.card:disabled { transform: translateY(-8%); box-shadow: 0 0 0 2px var(--accent), 0 2px 6px rgba(0, 0, 0, .35); }
+/* Score and game info sit on a translucent panel so they read well on the wood. */
+.scoreboard, .game-info { background: var(--wood-panel); border-radius: 10px; padding: 8px 10px; }
+.game-box { --wood-panel: rgba(255, 250, 240, .62); }
+:root[data-mode="dark"] .game-box { --wood-panel: rgba(0, 0, 0, .32); }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"]) .game-box { --wood-panel: rgba(0, 0, 0, .32); } }

@@ -4,11 +4,32 @@
 .play-head h1 { font-weight: 800; font-size: 2.2rem; letter-spacing: -.02em; margin-bottom: .2em; }
 .play-head p { color: var(--muted); margin: 0; }
 .game-box {
+  /* A wooden card table: light oak in light mode, dark walnut in dark mode, whatever the colour theme. */
+  --wood: #c49a66;
+  --wood-grain: rgba(110, 66, 28, .20);
+  --wood-shine: rgba(255, 238, 205, .10);
+  --wood-glow: rgba(255, 236, 200, .28);
   height: clamp(620px, calc(100vh - var(--nav-h) - 150px), 900px); width: 100%; overflow: hidden; position: relative;
-  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--surface) 86%, var(--accent)) 0%, var(--surface) 72%);
-  border: 1px solid var(--border); border-radius: 16px;
-  box-shadow: inset 0 0 0 6px var(--bg), 0 10px 30px -18px var(--shadow);
+  background:
+    radial-gradient(ellipse at 50% 45%, var(--wood-glow) 0%, transparent 62%),
+    repeating-linear-gradient(91deg, var(--wood-grain) 0 2px, transparent 2px 9px, var(--wood-shine) 9px 11px, transparent 11px 21px),
+    repeating-linear-gradient(89deg, transparent 0 37px, rgba(0, 0, 0, .06) 37px 39px, transparent 39px 83px),
+    var(--wood);
+  border: 1px solid rgba(40, 22, 8, .45); border-radius: 16px;
+  box-shadow: inset 0 0 0 6px rgba(40, 22, 8, .16), inset 0 0 60px rgba(40, 22, 8, .28), 0 10px 30px -18px rgba(0, 0, 0, .5);
 }
+:root[data-mode="dark"] .game-box {
+  --wood: #3b2618; --wood-grain: rgba(0, 0, 0, .30); --wood-shine: rgba(255, 200, 150, .05); --wood-glow: rgba(255, 190, 130, .10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode="light"]) .game-box {
+    --wood: #3b2618; --wood-grain: rgba(0, 0, 0, .30); --wood-shine: rgba(255, 200, 150, .05); --wood-glow: rgba(255, 190, 130, .10);
+  }
+}
+/* Text that sits straight on the wood needs more contrast than the theme's muted grey. */
+.game-box { --muted: #4b3421; }
+:root[data-mode="dark"] .game-box { --muted: #d4c1a6; }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"]) .game-box { --muted: #d4c1a6; } }
 .game-empty { height: 100%; display: grid; place-content: center; justify-items: center; text-align: center; padding: 24px; color: var(--muted); }
 .game-empty p { max-width: 40ch; }
 .game-title { font-family: var(--font-heading); font-weight: 700; font-size: 1.3rem; color: var(--text); margin-bottom: .3em; }

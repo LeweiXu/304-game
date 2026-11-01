@@ -31,7 +31,7 @@ export default function PlayPage() {
         <p>You and North against East and West, all three played by bots. New to the game? <Link to="/rules">Read the rules</Link> first.</p>
       </div>
       <section className="game-box" aria-label="Game table">
-        {game.match ? <Table game={game} assist={settings.assist} onSettings={() => setShowSettings(true)} /> : (
+        {game.match ? <Table game={game} assist={settings.assist} hints={settings.hints} onSettings={() => setShowSettings(true)} /> : (
           <div className="game-empty">
             <p className="game-title">Start a match</p>
             <p>First team to give away all 10 stone wins. Your progress is saved in this browser.</p>

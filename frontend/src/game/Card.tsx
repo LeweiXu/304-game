@@ -9,9 +9,11 @@ type Props = {
   /** Extra marker, e.g. the folded trump card. */
   tag?: string;
   label?: string;
+  /** Number shown on the card, e.g. its place in a declared caps order. */
+  badge?: number;
 };
 
-export function Card({ card, size = 'table', onClick, disabled, tag, label }: Props) {
+export function Card({ card, size = 'table', onClick, disabled, tag, label, badge }: Props) {
   const suit = suitOf(card);
   const cls = `card card-${size}${isRed(suit) ? ' red' : ''}${tag ? ' tagged' : ''}`;
   const face = (
@@ -19,6 +21,7 @@ export function Card({ card, size = 'table', onClick, disabled, tag, label }: Pr
       <span className="corner"><b>{rankOf(card)}</b><i>{SUIT_SYMBOL[suit]}</i></span>
       <span className="pip" aria-hidden="true">{SUIT_SYMBOL[suit]}</span>
       {tag && <span className="card-tag">{tag}</span>}
+      {badge !== undefined && <span className="card-badge">{badge}</span>}
     </>
   );
   const name = label ?? `${rankOf(card)} of ${{ c: 'clubs', d: 'diamonds', h: 'hearts', s: 'spades' }[suit]}`;
