@@ -45,7 +45,7 @@ For the Cloudflare 404 vs 502 troubleshooting notes, see `~/personal_projects/lo
 1. New Vercel project from this repo, **Root Directory** `frontend`, preset Vite.
 2. `VITE_API_BASE` comes from the committed `frontend/.env.production`. If you also set it in the Vercel dashboard, the dashboard value wins.
 3. Add the custom domain `304.leweixu.com` in Vercel, then the CNAME it asks for in the `leweixu.com` Cloudflare zone (DNS only, not proxied).
-4. `frontend/vercel.json` rewrites everything to `index.html` for SPA routing.
+4. There are two `vercel.json` files on purpose. The repo-root one builds `frontend/` if the project's Root Directory is left at the repo root; `frontend/vercel.json` is used if Root Directory is set to `frontend`. Both rewrite everything to `index.html` for SPA routing.
 
 Vercel redeploys on every push to `main`.
 
