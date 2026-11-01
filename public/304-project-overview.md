@@ -30,18 +30,16 @@ The engine is the single source of truth for the rules. The website, the bots an
 4. **trump8**: only if someone bid on 8 cards; the old trumper takes their card back and the new one picks.
 5. **declare**: the trumper chooses closed trump (suit stays secret) or open trump. A trumper holding all eight trumps may instead declare an absolute hand (a pass-on). Skipped for PCC.
 6. **show**: open trump declared by a trumper without priority, or any PCC: the trumper picks one trump card from their hand to show the table.
-7. **play**: 8 tricks ("rounds"). In closed trump, a player who can't follow suit plays face down; face-down trumps cut, and the first cut reveals trump. Detailed trumper restrictions are rules §T-1 to §T-6. During play any player may call Spoilt Trumps (once each), and with the claim-threshold option on, a player whose team has reached its points may claim the game.
+7. **play**: 8 tricks ("rounds"). In closed trump, a player who can't follow suit plays face down; face-down trumps cut, and the first cut reveals trump. Detailed trumper restrictions are rules §T-1 to §T-6. On their turn a player may also call **caps** (their team has won every round so far and will win the rest; they declare their card order), **claim the balance** (option), or **claim the threshold** (option).
 8. **over**: scoring. If the bidding team reached its bid, it gives away stone (1-3 depending on the bid, 5 for PCC); if not, the opponents give away stone (2-4, 5 for PCC). Each team starts with 10; first to give away all 10 wins the match.
 
-One match is many games. A game can also end early: nobody bids (pass-on), a redeal, an 8-card pass-on, an absolute hand, a correct Spoilt Trumps call, a threshold claim, or a lost PCC. Pass-ons, redeals, absolute hands and Spoilt Trumps score nothing.
+One match is many games. A game can also end early: nobody bids (pass-on), a redeal, an 8-card pass-on, an absolute hand, Spoilt Trumps (detected automatically when play would start: same-dealer redeal), a caps call, a balance or threshold claim, a lost PCC, or simply being **decided** (a team reached its points threshold and caps can no longer matter). Pass-ons, redeals, absolute hands and Spoilt Trumps score nothing.
 
 ### Rules implemented vs not
 
-Implemented: all of betting (partnering, every skip/termination rule §B-1 to §B-9, redeal, pass-ons, PCC), trump selection, open and closed trump with the choice of which trump card to show, closed-trump face-down play and the trumper's private inspection of folded cards, overcuts, trump reveal, exhausted trumps, PCC play (partner sits out, trumper leads, 3-card tricks, 5 stone), absolute hand (goodwill declaration and the opposition's post-game claim), Spoilt Trumps (with the 1-stone penalty for a false call), stone/match scoring, light slap-shuffling with the cut and the riffle remedy, and the optional claim-threshold rule.
+Everything in `rules.md` is implemented: all of betting (partnering, every skip/termination rule §B-1 to §B-9, redeal, pass-ons, PCC), trump selection, open and closed trump with the choice of which trump card to show, closed-trump face-down play and the trumper's private inspection of folded cards, overcuts, trump reveal, exhausted trumps, PCC play, absolute hands (goodwill and the opposition's claim), automatic Spoilt Trumps, caps (correct / late / early / wrong, external caps, the round-7 bonus), stone/match scoring, light slap-shuffling with the cut and the riffle remedy, and the optional claim-threshold and claim-balance rules.
 
-Not implemented yet: **Caps** (calling a sweep with a declared card order, plus late, early, wrong and external caps) and the optional **Claim Balance** rule. Without caps every game that isn't decided early plays all 8 tricks. Caps will add actions (a call plus a card order) and observation features, so expect the env to be versioned. See "Caps: the plan" at the end.
-
-The other in-game penalties in `rules.md` are about table behaviour (talking, signalling, illegal plays) that the online engine already makes impossible, so the false Spoilt Trumps call is the only penalty.
+The table-behaviour penalties in `rules.md` (talking, signalling, illegal plays) don't apply online: the engine makes them impossible. The only penalties are claim-balance ones.
 
 ### House-rule options (per match)
 
@@ -50,11 +48,11 @@ The other in-game penalties in `rules.md` are about table behaviour (talking, si
 | Option | Default | Effect |
 |---|---|---|
 | `shuffle` | `'random'` | `'random'`: full shuffle every deal. `'slap'`: start from the order the last game's cards were gathered in, 1-3 slap shuffles, then a cut (or a tap); three redeals in a row from one seat earn a riffle. Light shuffling keeps clumps, so hands run stronger. |
-| `caps` | `true` | Caps rules on or off. Stored only; caps isn't implemented yet. |
-| `claimBalance` | `false` | Stored only; not implemented yet. |
-| `claimThreshold` | `false` | Adds the `claim` action (see below). |
+| `caps` | `true` | Caps rules: the `caps` action, late caps for an uncalled sweep, and the game keeps going while a team could still sweep. Costs engine speed (the solver runs on sweeping teams' turns). |
+| `claimBalance` | `false` | Adds the `balance` action and the missed / late / wrong claim penalties. Also runs the solver. |
+| `claimThreshold` | `false` | Adds the `claim` action (see below), and turns off the automatic end of a decided game. |
 
-The website also has an "assistance" display setting (show points per trick and running totals). It's UI only; the engine always exposes the points a seat can see.
+The website also has display settings: "assistance" (points per trick and running totals) and "hints" (short explanations on the table), both off by default. They're UI only; the engine always exposes everything a seat can see.
 
 ### Interpretation calls the code makes
 
@@ -63,8 +61,11 @@ The website also has an "assistance" display setting (show points per trick and 
 - **A PCC game ends as soon as the opponents win a round**, because it's lost at that point.
 - **The holder skip on 8 cards.** In 8-card betting, only an 8-card bid counts as the "current bid" for the holder skip (§B-2), so the 4-card trumper can still speak on 8 cards.
 - **Open trump.** A trumper without priority shows a trump card of their choice; a trumper with priority reveals by leading trump in round 1. For PCC the trumper always shows a card, and isn't forced to lead trump.
-- **Absolute hand means all eight trumps.** "Guaranteed to win all 8 rounds whatever the deal, however others play, whoever leads" can only hold for all eight trumps: with any non-trump card, some deal lets an opponent lead that suit (or forces you to lead it) while another opponent, void in it, cuts with an outstanding trump. Only the trumper can hold all eight. If the trumper sweeps holding them without declaring, the opposition's post-game claim is applied automatically (it's always in their interest), so the game becomes a pass-on. Not available in PCC.
-- **Spoilt Trumps.** A call is right if the trumping team's opponents held no trump at all in the 8 cards they were dealt. Each seat may call once per game, any time during play before the last card. A wrong call costs the caller's team 1 stone (their opponents give one away), settled when the game ends, and play carries on.
+- **Absolute hand, two shapes.** All eight trumps (wins whoever leads), or, when the trumper leads round 1 (priority or PCC): holding the top n trumps where n trumps are outstanding (leading them from the top draws every other trump even if one opponent holds them all), and in each other suit only that suit's top cards in sequence. If the trumper sweeps holding one without declaring, the opposition's post-game claim is applied automatically (it's always in their interest), so the game becomes a pass-on. The post-game claim isn't available in PCC.
+- **Spoilt Trumps is automatic.** Once trump is final (play is about to start), if the trumping team's opponents were dealt no trump at all, the game is void and the same dealer redeals. No call, no penalty.
+- **Caps judging.** The engine records, on every turn of a team that has won every round so far, whether the player to act could call caps then (the solver, from that player's view only). A call is correct if it's at the caller's first such turn and the declared order guarantees the sweep; later is late; no guaranteed order at all is early; a guaranteed order exists but not the declared one is wrong. An uncalled sweep is late caps if any player of that team had a chance. Budgets: the per-turn check gives up after 20k search nodes (unknown counts as "no chance", so nobody is penalised on a maybe); judging a call allows 2M nodes and gives the caller the benefit of the doubt if that runs out. In practice only some round 1-2 positions get near the budgets.
+- **Ending a decided game.** After each trick, if a team has reached its threshold (bid, or 305 - bid) and caps can't matter any more (caps off, or both teams have won a round), the game ends and is scored. Not with the claim-threshold option, where players claim themselves.
+- **Claim balance.** The `balance` action is legal on your turn when the option is on (and caps doesn't apply). The engine judges it with the same solver. Right: the game ends and every unplayed card counts for the claimer's team; late (the team had an earlier chance): also 1 stone. Wrong: 1 stone and play goes on, one wrong claim per seat. A team that had a chance and never claimed pays 1 stone at the end.
 - **Claim threshold.** A claim needs the claimer's team to have reached its threshold counting only cards the claimer has seen, so a claim can't be wrong. It ends the game with the claiming team winning. Not claiming isn't penalised.
 
 ## What the agent can see
@@ -101,7 +102,7 @@ This is enforced in one place: `viewFor(match, seat)` builds a `PlayerView`, and
 | Folded cards the player was allowed to see: their own, revealed trumps, and (for the trumper) every folded card once each trick finished | inside `play.trick` / `play.tricks` (`card` is non-null) | inside `trick` / `tricks` |
 | How many face-down cards each player played that this player never saw | `play.unseenFaceDown` | `hidden_counts` |
 | Tricks won and visible points per team so far | `play.tricksWon`, `play.visiblePoints` | `tricks_won`, `points` |
-| Spoilt Trumps calls so far and penalties pending | `spoiltCalled`, `penalties` | `spoilt_called`, `penalties` |
+| Wrong claim-balance calls so far and penalties pending | `balanceCalled`, `penalties` | `balance_called`, `penalties` |
 | Stone left per team, the match score | `stone` | `stone` |
 | Results of earlier games in the match | `history` | (not encoded; stone already captures the score) |
 | How the game ended, with full points | `end` | (episode end; reward) |
@@ -119,6 +120,7 @@ This is enforced in one place: `viewFor(match, seat)` builds a `PlayerView`, and
 - **The trump suit**, from non-trumpers, until it's opened by declaration or revealed by a cut.
 - **The identity of the folded trump card**, from non-trumpers, until it's flipped on a cut reveal or played face up. A card shown on an open declaration is public, but nobody else knows whether it was the folded one.
 - **Who was dealt which cards.** That decides Spoilt Trumps and absolute hands, but the engine settles those itself.
+- **The engine's caps / balance bookkeeping** (who had a chance and when). It's used for judging, never shown to anyone.
 - **The 16 undealt cards** during 4-card betting.
 
 ### Things you might think are missing (and aren't)
@@ -159,13 +161,19 @@ nextGame(match: MatchState): MatchState
 viewFor(match: MatchState, seat: Seat): PlayerView
 // Everything `seat` can see or remember (see above). Includes `legal`/`legalIds` when it's their turn.
 
-encodeAction(a: Action): number          // 0..120
+encodeAction(a: Action): number          // 0..121
 decodeAction(i: number): Action
-legalMask(game: GameState, out?: Uint8Array): Uint8Array   // length 121, 1 = legal
+legalMask(game: GameState, out?: Uint8Array): Uint8Array   // length 122, 1 = legal
 
 stoneAtStake(bid: number): [win, loss]   // [1,2] / [2,3] / [3,4] / [5,5] for PCC
 thresholdFor(bid: number, isBidTeam: boolean): number   // bid, or 305 - bid
-isAbsoluteHand(cards: Card[], trump: Suit): boolean     // all eight trumps
+isAbsoluteHand(cards: Card[], trump: Suit, trumperLeads: boolean): boolean
+
+findGuaranteedOrder(view: PlayerView, budget?: number): Card[] | null | 'unknown'
+// Caps / claim-balance solver: an order of view.seat's remaining cards that guarantees their team
+// every remaining round (null: none; 'unknown': ran out of search budget). Uses only the view.
+orderGuarantees(view: PlayerView, order: Card[], budget?: number): boolean | 'unknown'
+CAPS_TRACK_BUDGET   // the per-turn budget the engine uses; bots should search with the same
 ```
 
 And in `bots/src/`:
@@ -197,14 +205,15 @@ type Action =
   | { type: 'trump'; card: Card }        // place this card face down as trump
   | { type: 'declare'; open: boolean }
   | { type: 'show'; card: Card }         // open trump / PCC: show this trump card
-  | { type: 'absolute' }                 // goodwill: all eight trumps, pass-on
-  | { type: 'spoilt' }                   // call Spoilt Trumps
+  | { type: 'absolute' }                 // goodwill declaration of an absolute hand: pass-on
+  | { type: 'caps'; order?: Card[] }     // call caps declaring this order of all my cards (omitted: the engine picks one)
+  | { type: 'balance' }                  // claim the balance (claim-balance option)
   | { type: 'claim' }                    // claim the game (claim-threshold option)
   | { type: 'play'; card: Card }         // face up or face down is decided by the rules
 
 interface HighBid { seat: Seat; value: number }   // value is PCC for a PCC bid
 interface Speech { stage: 4 | 8; seat: Seat; action: 'bid' | 'pass' | 'partner'; value?: number; inSeat?: Seat }
-interface Penalty { seat: Seat; reason: 'falseSpoilt'; stone: number }
+interface Penalty { seat: Seat; reason: 'balanceWrong' | 'balanceLate' | 'balanceMissed'; stone: number }
 
 interface SeenCard { seat: Seat; card: Card | null; faceDown: boolean; revealed: boolean }
 // card is null when it went face down and this seat never saw it
@@ -224,7 +233,9 @@ type GameEnd =
   | { kind: 'passOn'; reason: 'lowPoints8'; seat: Seat }
   | { kind: 'redeal'; seat: Seat }
   | { kind: 'absolute'; seat: Seat; how: 'goodwill' | 'claim' }
-  | { kind: 'spoilt'; seat: Seat }
+  | { kind: 'spoilt' }                       // automatic; same dealer redeals
+  | { kind: 'caps'; seat: Seat | null; team: Team; result: 'correct' | 'late' | 'early' | 'wrong';
+      order: Card[] | null; round: number; bid: HighBid; bidTeam: Team; giver: Team; stone: number }
 ```
 
 ### `PlayerView` (what `viewFor` returns)
@@ -281,7 +292,7 @@ interface PlayerView {
     unseenFaceDown: number[];    // per seat
   } | null;
 
-  spoiltCalled: boolean[];       // per seat, this game
+  balanceCalled: boolean[];      // per seat: made a wrong claim-balance call this game
   penalties: Penalty[];          // this game, settled at the end
   end: GameEnd | null;           // full result once phase is 'over'
 }
@@ -289,7 +300,7 @@ interface PlayerView {
 
 `PlayerView` is plain JSON, so it crosses into Python unchanged (see `views()` below).
 
-### Action space (121 discrete actions)
+### Action space (122 discrete actions)
 
 | Indices | Action |
 |---|---|
@@ -301,13 +312,14 @@ interface PlayerView {
 | 19 | pass-on (8 cards) |
 | 20-21 | declare closed / open trump |
 | 22 | absolute hand (goodwill) |
-| 23 | Spoilt Trumps |
-| 24 | claim (threshold) |
-| 25-56 | choose trump card (32 cards) |
-| 57-88 | show trump card (32 cards) |
-| 89-120 | play card (32 cards) |
+| 23 | caps (as a number it carries no order: the engine declares a guaranteed order if one exists) |
+| 24 | claim balance |
+| 25 | claim (threshold) |
+| 26-57 | choose trump card (32 cards) |
+| 58-89 | show trump card (32 cards) |
+| 90-121 | play card (32 cards) |
 
-Card order everywhere (`PACK`) is clubs, diamonds, hearts, spades, and within a suit J, 9, A, 10, K, Q, 8, 7. Whether a played card goes face down isn't a separate action; the engine decides it from the rules (closed trump + can't follow suit = face down). Typically only a handful of actions are legal at once (e.g. 1-8 cards plus maybe Spoilt Trumps in play, a few bid values plus PCC and pass in betting), so action masking matters. Note that Spoilt Trumps is legal on almost every play turn (once per seat per game): a learner will try it and pay the 1-stone penalty until it learns when it's right.
+Card order everywhere (`PACK`) is clubs, diamonds, hearts, spades, and within a suit J, 9, A, 10, K, Q, 8, 7. Whether a played card goes face down isn't a separate action; the engine decides it from the rules (closed trump + can't follow suit = face down). Typically only a handful of actions are legal at once, so action masking matters. Caps is legal on every turn of a team that has won every round so far, and claim balance on most turns when that option is on: a learner will try them and pay for wrong calls (5 stone for early/wrong caps, 1 for a wrong balance claim) until it learns when they're right. For an agent, "caps" means "I claim a sweep": the engine finds the order, so the agent never has to spell one out (a human on the website does).
 
 ### Speed
 
@@ -315,9 +327,11 @@ Single core, Node 24, Core Ultra 7 265K:
 
 | | |
 |---|---|
-| random legal moves, pure `apply` | ~1.15M actions/s |
-| random legal moves, in-place `step` | ~1.8M actions/s |
-| `legalActions` / `viewFor` / `legalMask` | ~0.2 / 0.6 / 0.8 µs |
+| random legal moves, caps off, pure `apply` | ~960k actions/s |
+| random legal moves, caps on (solver runs on sweeping teams' turns) | ~150k-870k actions/s, depending on how often a team is sweeping |
+| random legal moves, in-place `step`, caps off | ~1.8M actions/s |
+| `legalActions` / `viewFor` / `legalMask` | ~0.2 / 0.7 / 0.6 µs |
+| caps solver per call | mostly well under 1 ms; rounds 1-2 average ~8 ms, worst ~30 ms at the per-turn budget |
 
 ## The training environment (bots/)
 
@@ -336,13 +350,13 @@ env.views() -> list[dict]                        # the full PlayerView (as above
 env.stats() -> dict                              # games / played / matches / agentSteps / botSteps counters
 env.close()
 env.obs_size      # 2847
-env.action_count  # 121
+env.action_count  # 122
 env.layout        # the observation layout table below, as a list of dicts
 
 @dataclass
 class Batch:
     obs: np.ndarray     # (n, 2847) float32, observation for the seat to act, values in 0..1
-    mask: np.ndarray    # (n, 121) uint8, 1 = legal action
+    mask: np.ndarray    # (n, 122) uint8, 1 = legal action
     seat: np.ndarray    # (n,) int8, absolute seat to act (0-3)
     reward: np.ndarray  # (n, 4) float32, one per absolute seat, for the game that just ended
     done: np.ndarray    # (n,) bool, a game ended during this step
@@ -354,12 +368,12 @@ Each `Batch` is freshly allocated, so it's safe to keep (e.g. in a replay buffer
 - **Agent vs bot seats.** `agent_seats` picks which seats the learner controls. The default, all four, is self-play. `[0, 2]` trains one team.
 - **Opponents.** `opponent` decides who plays the other seats: `"naive"` or `"random"`.
 - **`check_legal`** makes the server reject illegal actions instead of trusting the mask.
-- **`rules`** sets the house-rule options for every match.
+- **`rules`** sets the house-rule options for every match. Note the engine default has `caps` on, which runs the solver; pass `{"caps": False}` for the fastest training, or keep it on once agents should learn caps.
 - **Two ways to read the state:**
   - `obs`: the fast fixed-size vector, for a neural network.
   - `views()`: the complete structured `PlayerView`, for debugging or for building a different encoding in Python. It's much slower (JSON), so don't call it every step at scale.
 
-**Episode and reward.** One episode is one game. Reward only arrives at the end. When a game is played out (or ends early by a claim or a lost PCC), the team that gave away k stone gets +k for both seats and the other team gets -k (zero-sum, partners share). A false Spoilt Trumps call adds -1 for the caller's team and +1 for the other team. Pass-ons, redeals, absolute hands and correct Spoilt Trumps calls give 0 (apart from any penalty). There's no shaping yet (e.g. card points), and no match-level reward. Stone counts are in the observation, so a policy could learn match-situation play.
+**Episode and reward.** One episode is one game. Reward only arrives at the end. When a game is played out (or ends early by a claim or a lost PCC), the team that gave away k stone gets +k for both seats and the other team gets -k (zero-sum, partners share). Caps outcomes reward the same way (stone given away, zero-sum). A claim-balance penalty adds -1 for the offender's team and +1 for the other. Pass-ons, redeals, absolute hands and Spoilt Trumps give 0 (apart from any penalty). There's no shaping yet (e.g. card points), and no match-level reward. Stone counts are in the observation, so a policy could learn match-situation play.
 
 **Multi-agent shape.** It's turn-based like PettingZoo's AEC model: each step is a decision for whichever agent seat is to act, and with all four seats as agents consecutive decisions come from different seats. The trainer has to attribute the end-of-game reward to each seat's decisions itself (e.g. keep per-seat trajectories). For a DQN-style agent, the transition for seat s goes from one of s's decisions to s's next decision (or the game end), not to the next row of the batch.
 
@@ -405,7 +419,7 @@ Everything is relative to the seat being encoded, so one network can play any se
 | `hidden_counts` | 2833 | 4 | per relative seat: face-down cards they played that I never saw, divided by 8 |
 | `tricks_won` | 2837 | 2 | tricks won by my team / the other team, divided by 8 |
 | `points` | 2839 | 2 | points I can see each team has won, divided by 304 |
-| `spoilt_called` | 2841 | 4 | per relative seat: has called Spoilt Trumps this game |
+| `balance_called` | 2841 | 4 | per relative seat: has made a (wrong) claim-balance call this game |
 | `penalties` | 2845 | 2 | penalty stone pending against my team / the other team this game, divided by 4 |
 
 Notes:
@@ -422,21 +436,21 @@ Dev machine, 256 games per worker:
 
 | setup | agent decisions/s | games/s |
 |---|---|---|
-| self-play, 1 worker | ~110k | ~7k |
-| self-play, 8 workers | ~400k | ~27k |
-| self-play, 16 workers | ~410k | ~28k |
-| one agent seat vs naive bots, 16 workers | ~280k | ~24k |
+| self-play, caps off, 1 worker | ~110k | ~8k |
+| self-play, caps off, 16 workers | ~415k | ~30k |
+| self-play, caps on, 16 workers | ~65k | ~5k |
+| one agent seat vs naive bots, 16 workers | ~240k | ~29k |
 
-Games per second depend heavily on the policy: random self-play now often bids PCC and loses it in the first trick, which makes games short. With a sensible policy expect about 40-50 decisions per game in self-play and about 12 with one agent seat. Each self-play step moves about 11 KB of observation per game, so at the top end the limit is memory bandwidth on the Python side. That's still far more than a GPU learner will consume.
+With caps on, random agents call caps whenever it's legal and every call is judged with the big solver budget, which is what makes that row slow; a trained agent that rarely calls caps wrongly will be much faster. Games per second also depend heavily on the policy (random self-play often bids PCC and loses it in one trick). Each self-play step moves about 11 KB of observation per game, so at the top end the limit is memory bandwidth on the Python side.
 
 ### Baselines
 
-Measured over about 20k games each (before PCC and Spoilt Trumps were in the action space; random play now does even worse because it bids PCC and calls Spoilt Trumps at random):
+Measured over about 20k games each (before PCC, caps and claim balance were in the action space; random play now does even worse because it bids PCC and calls caps at random):
 
 - Random team (seats 0 and 2 playing uniformly random legal moves) vs naive team: random averages **-2.9 stone per game** and wins about **4%** of played-out games, mostly because random bidding overreaches.
 - Random vs random: about 50/50, as expected.
 
-So the naive bot is a sanity-check opponent, not a strong one. It opens with a decent 4-card hand, rarely competes, never bids PCC, makes trump its longest suit, wins tricks cheaply, gives points to a winning partner, cuts only when the trick has points worth taking, takes an absolute hand, claims the threshold when it can, and never calls Spoilt Trumps.
+So the naive bot is a sanity-check opponent, not a strong one. It opens with a decent 4-card hand, rarely competes, never bids PCC, makes trump its longest suit, wins tricks cheaply, gives points to a winning partner, cuts only when the trick has points worth taking, takes an absolute hand, claims the threshold when it can, and calls caps / claims the balance as soon as the solver says it's sure (with the engine's per-turn budget, so it's never caught for a late call).
 
 ## Hardware
 
@@ -465,20 +479,19 @@ So the naive bot is a sanity-check opponent, not a strong one. It opens with a d
 
 It already runs three other small web backends.
 
-## Caps: the plan
+## Caps and claim balance: how they're judged
 
-Caps isn't implemented. `rules.md` ("Precise definition" under Caps) defines it exactly; in short: on one of their own turns, a player's team having won every round so far, there is a **declared order** of all the player's remaining cards such that, in every deal of the unseen cards consistent with what the player knows, and for every legal play by the other three players (partner included), playing that order wins every remaining round. Calling means declaring the order. Correct / Late / Early / Wrong are defined in terms of that predicate and each player's **first opportunity**.
+`rules.md` ("Precise definition" under Caps) defines caps exactly: on one of their own turns, a player's team having won every round so far, there is a **declared order** of all the player's remaining cards such that, in every deal of the unseen cards consistent with what the player knows, and for every legal play by the other three players (partner included), playing that order wins every remaining round. Claim balance is the same test without the "won every round so far" part.
 
-The planned implementation:
+The solver (`engine/src/caps.ts`) answers "does this order guarantee every remaining round?" and "does any order?":
 
-- **Predicate** `canCaps(view, order?)`: for a given order, an adversarial search where the other players' cards are chosen lazily from the unseen pool (any card a player plays must keep the rest of the deal consistent: hand sizes, known voids, the trumper holding the folded card), so "every deal" and "every play" collapse into one search for a single losing line. Equivalent low cards are merged (cards between the same two known higher and lower cards behave the same), and the search stops at the first lost round. "Some order exists" tries orders in a sensible sequence (winners first, trump first) with the same search.
-- **Feasibility checks** are a tiny flow problem (4 suits x 3 players with void constraints), cheap enough to run at every node.
-- **Cost** is small late in a game and grows early. A quick refuter (random consistent deals plus a greedy adversary) disposes of almost all early positions; only survivors get the exact search.
-- **When it runs:** on a call (judge the declared order), and when a team wins all 8 without calling (replay the game, checking each of the team's turns in order, to find a first opportunity for Late Caps). Not on every turn of every game, which keeps training throughput high.
-- **Testing:** a brute-force reference (enumerate every consistent deal and every play) for endgames of 2-3 cards, compared against the fast search on thousands of random positions, plus the worked examples in `rules.md`.
-- **For agents:** a `caps` action followed by the order. Either the agent picks the order card by card (more actions), or the engine finds a valid order when the agent calls (an agent that calls when no order exists is penalised). Undecided; affects the action space.
+- **Lazy dealing.** The other players' cards aren't dealt up front. Whenever one of them plays, the search picks the card from the cards this seat hasn't seen, as long as the rest can still be dealt consistently. Consistency covers hand sizes, voids they've shown, face-down cards this seat never saw, and the trumper's folded card, and is checked with a tiny flow problem (4 suits into a few slots). With the order fixed the caller makes no choices, so "every deal and every play" becomes one search for a single losing line.
+- **Equivalent cards are merged.** Unseen cards that no known card separates in rank behave the same; only the highest and lowest of each run are tried.
+- **Real rules for the caller.** The order has to be legal in every world, including the closed-trump trumper rules and exhausted trumps.
+- **Shortcuts.** A position where all of the caller's remaining cards are trumps that beat every outstanding trump is a sure win.
+- **Tested against brute force.** Random endgame positions (3-4 cards) are checked against a reference that enumerates every consistent deal and every legal play with the engine's own rules. They agree exactly when the caller can see everything relevant, and the solver never claims a guarantee the reference can break otherwise.
 
-Claim Balance uses the same predicate without the "won every round so far" condition, so it comes almost for free once caps exists.
+When it runs: on every turn of a team that's still sweeping (caps on) or on every turn (claim balance on), to record each player's first chance; and when a call is made, to judge it. Its record of chances is hidden from the view.
 
 ## Constraints and preferences for the bot design
 
@@ -486,5 +499,4 @@ Claim Balance uses the same predicate without the "won every round so far" condi
 - Bots should be deterministic given (view, seed).
 - Several difficulty levels are wanted, not just one strong bot.
 - Where trained models run is open. Options: in the browser (the site is a static Vercel deploy; e.g. ONNX Runtime Web, needs small models), or behind the FastAPI backend on the home server (i7-9700 + RTX 2060).
-- Caps is coming later and will change the action space and observation.
 - 304 has imperfect information, a two-stage auction, partnership play (shared reward, no communication beyond play), and closed-trump hidden-suit mechanics. Worth weighing approaches with that in mind: e.g. DQN or PPO self-play with action masking, recurrent vs feed-forward policies (the observation already carries the full history), population or league training, determinization/ISMCTS with learned priors, NFSP or Deep CFR-style methods. Also separating or sharing networks for bidding vs play.

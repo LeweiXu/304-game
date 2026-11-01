@@ -43,7 +43,8 @@ while True:
 
 - One episode is one game (deal to scoring). Slots auto-reset: when `done[i]` is set, `obs[i]` is already the first decision of the next game.
 - `agent_seats=[0, 2]` with `opponent="naive"` trains one team against the naive bot; the default `[0, 1, 2, 3]` is self-play. `opponent="random"` plays uniformly random legal moves.
-- Rewards are stone given away, zero-sum per game: the team that gave away k stone gets +k on both seats, the other team -k. A false Spoilt Trumps call adds -1 / +1. Pass-ons, redeals, absolute hands and correct Spoilt Trumps calls give 0.
+- Rewards are stone given away, zero-sum per game: the team that gave away k stone gets +k on both seats, the other team -k (caps outcomes included). A claim-balance penalty adds -1 / +1. Pass-ons, redeals, absolute hands and Spoilt Trumps give 0.
+- The engine's default rules have caps on, which runs the caps solver; `rules={"caps": False}` is much faster.
 - `check_legal=True` makes the server reject illegal actions instead of trusting the mask.
 - `rules={...}` sets house-rule options for every match, e.g. `{"shuffle": "slap", "claimThreshold": True}`.
 - The observation layout (block names, offsets, meanings) comes back as `env.layout`.
@@ -59,8 +60,9 @@ Random legal actions, no network, on the dev machine (Core Ultra 7 265K, 20 core
 
 | setup | agent decisions/s | games/s |
 |---|---|---|
-| self-play, 1 worker x 256 games | ~97k | ~2.1k |
-| self-play, 8 workers x 256 | ~365k | ~8.1k |
-| one agent seat vs naive bots, 16 x 256 | ~275k | ~22k |
+| self-play, caps off, 1 worker x 256 games | ~110k | ~8k |
+| self-play, caps off, 16 x 256 | ~415k | ~30k |
+| self-play, caps on, 16 x 256 (random agents call caps a lot) | ~65k | ~5k |
+| one agent seat vs naive bots, 16 x 256 | ~240k | ~29k |
 
-The observation is 2746 floats (about 11 KB per game per step), so past about 8 workers memory bandwidth on the Python side is the limit. Replies are read straight into the final numpy arrays by parallel threads, with no extra copies. That's far more than a GPU learner will consume.
+The observation is 2847 floats (about 11 KB per game per step), so past about 8 workers memory bandwidth on the Python side is the limit. Replies are read straight into the final numpy arrays by parallel threads, with no extra copies. That's far more than a GPU learner will consume.

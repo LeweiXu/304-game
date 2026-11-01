@@ -1,6 +1,6 @@
 # 304 — Caps Formalism
 
-> **Out of date (2026-11-01).** This document models Caps with *adaptive* strategies (the caller may branch on what others play). The house rule is now a **fixed, declared order**: on the caller's turn, there must be one order of their remaining cards that wins every remaining round in every consistent world against every legal play, and calling commits to that order. See *When to Call Caps* in [rules.md](rules.md). The predicate below needs rewriting to match before caps is implemented in the engine; the information-set and timing ideas still apply.
+> **Out of date (2026-11-01).** This document models Caps with *adaptive* strategies (the caller may branch on what others play). The house rule is now a **fixed, declared order**: on the caller's turn, there must be one order of their remaining cards that wins every remaining round in every consistent world against every legal play, and calling commits to that order. See *When to Call Caps* in [rules.md](rules.md). Caps is now implemented against the fixed-order definition (`engine/src/caps.ts`; approach summarised in `304-project-overview.md`). The predicate below still describes the old adaptive model; the information-set and timing ideas still apply.
 
 > Formal model for **Caps**, **External Caps**, **Absolute Hand**, and
 > **Claim Balance**. Companion to [rules.md](rules.md) (game rules) and

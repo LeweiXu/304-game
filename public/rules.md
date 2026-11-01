@@ -206,7 +206,10 @@ The only legal bid higher than 250 is **PCC (Partner Closed Caps)**.
 
 #### Absolute Hand
 
-**[House Rule]** An **absolute hand** is one so strong that the holder is guaranteed to win all 8 rounds before play begins, regardless of how others play and regardless of priority order. This is exceptionally rare (well under 1% of hands).
+**[House Rule]** An **absolute hand** is one so strong that the holder is guaranteed to win all 8 rounds before play begins, regardless of how others play. This is exceptionally rare (well under 1% of hands). Only the Trumper can hold one, in one of two shapes:
+
+- **All eight trumps.** Wins whoever leads.
+- **Leading with trump draws every other trump.** The Trumper leads round 1 (they have priority, or it is PCC) and, leading trumps from the top, is sure to pull every trump the others hold before running out of higher ones, after which every card left is a winner. Concretely: with *n* trumps outstanding, the Trumper holds the top *n* trumps of the suit (one opponent might hold all *n*), and in each other suit they hold, their cards are that suit's top cards in sequence (J, 9, A, ... with no gap).
 
 Two paths exist:
 
@@ -296,19 +299,11 @@ The rule does **not** apply in PCC.
 
 ### Spoilt Trumps
 
-If the Trumping team's opponents collectively hold **zero** Trump cards from the deal (i.e. between their 16 cards, not a single card belongs to the Trump suit), any player who notices may declare **Spoilt Trumps**. The game is void — no stone is exchanged, the cards are thrown in, and a pass-on triggers (next dealer).
+If the Trumping team's opponents collectively hold **zero** Trump cards from the deal (i.e. between their 16 cards, not a single card belongs to the Trump suit), the game is **Spoilt**. Nobody has to call it: it is detected as soon as the Trump suit is final (after 8-card betting and the open/closed choice), the cards are thrown in, no stone is exchanged, and **the same dealer deals again**.
 
-Either team may call Spoilt Trumps at any time **before** the last card of the last round is played. After that, it is too late.
-
-**The safeguard principle.** Spoilt Trumps, Absolute Hand, and the low-points pass-ons all sit in the same family: they are **safeguards available to the disadvantaged side** to void a deal that has gone irrecoverably against them. The general theme is that the side being disadvantaged carries the onus of invocation:
-
-- If the **opposition** is being crushed by a Spoilt-Trumps deal (no Trump = no defensive cuts), they will almost always call it.
-- If the **Trumping team** is somehow losing a Spoilt-Trumps deal (e.g. the Trumper's partner holds catastrophic non-trump cards and the opposition is winning on raw point values), the Trumper may deduce the spoilt state from their partner's trump plays and call it themselves to void the loss.
-- Either side is permitted to call. The losing side has the strongest motive.
+**The safeguard principle.** Spoilt Trumps, Absolute Hand and the low-points pass-ons all sit in the same family: they void a deal that has gone irrecoverably one way before it is played out. Spoilt Trumps is applied automatically; the others are invoked by the player concerned.
 
 **Clarification:** If the opposition originally held Trump cards but lost them through cuts during play (i.e. Trump was "pulled from them"), this does **not** count as Spoilt Trumps. The opposition must have held zero Trump from the outset of the game.
-
-**False Spoilt Trumps call:** Calling Spoilt Trumps is itself a "speech" — it can divulge that the caller has been counting trumps. A false call (the opposition did in fact hold trumps) attracts a **1-stone penalty** (caller's team receives 1 stone). In practice this is exceedingly rare.
 
 ---
 
@@ -460,7 +455,7 @@ Off by default. A team wins the game as soon as it has the points it needs: the 
 
 ### Claim Balance
 
-Off by default, and not available on the site yet. Like Caps, but for the remaining rounds only: once a player knows their team will win every remaining round (using the same definition as a Caps opportunity, without the requirement to have won every round so far), they must claim the balance. Missing the claim costs the team **1 stone** (the opponents give one away).
+Off by default. Like Caps, but for the remaining rounds only: once a player, on their turn, is sure their team will win every remaining round (the same test as a Caps opportunity, without needing to have won every round so far), they must **claim the balance**. A correct claim ends the game, and every card still unplayed counts for the claiming team. Missing the claim, or making it later than the team's first chance, costs the team **1 stone** (the opponents give one away). A wrong claim also costs 1 stone, and play carries on; each player gets one such claim per game. While Caps is on and a team has won every round so far, Caps applies instead.
 
 ## Scoring
 
@@ -471,6 +466,10 @@ At the end of each game, both teams count the card points in their won rounds. T
 **What "give" and "receive" mean.** Stone only ever leaves a pile; no team's stone count ever goes up. Whichever team wins the game removes stone from its own pile: when the betting team makes its bid, it gives away the "Win" amount below; when it falls short, the opponents give away the "Loss" amount instead. "Team X receives N stone" always means "X's opponents give away N stone". A team can't give away more stone than it has left; reaching zero wins the match.
 
 Note on thresholds: The betting team's threshold is simply their bid (e.g. a bid of 160 requires 160+ points). The opposing team's threshold is 304 − bid + 1 (e.g. opposing a 160 bid requires 145+ points). These are **mutually exclusive** — there is no possibility of a tie, since the total points in the pack is 304.
+
+### Ending a Decided Game
+
+Once one team has reached the points it needs (the bid, or 304 − bid + 1 for the opposition), the result can no longer change, so the game ends there without playing out the remaining rounds, provided Caps no longer matters: either Caps is off, or both teams have already won a round. (With Claim Threshold on, the players have to claim it instead.)
 
 ### Scoring Table
 
@@ -515,7 +514,6 @@ There is a fair bit of pride involved in this game, and good sportsmanship is ex
 - Deducing and sharing information from your own hand that others cannot access (e.g. "Player X has no more Clubs — I'm holding all of them").
 - Playing cuts or minuses **unfolded** in Closed Trump games.
 - The dealer shuffling the pack in any way after the opposition has cut (or declined to cut).
-- Falsely calling Spoilt Trumps (the opposition did in fact hold trumps).
 
 ### Severe Penalties (automatic loss + 1 stone)
 
@@ -631,11 +629,11 @@ Terms are ordered to minimise forward references. Terms in **bold** within defin
 
 **External Caps:** Caps called by the non-Trumping team. Same correctness test as regular Caps but with a more lenient "first opportunity" standard given limited information. Does not apply to PCC. Outcomes mirror regular Caps in structure but framed against the betting team's loss.
 
-**Absolute Hand:** **[House Rule]** A hand so strong that the holder is guaranteed to win all 8 rounds before play begins, regardless of priority order. Holder may declare pre-round-1 (goodwill) or opposition may claim post-game during scrutiny. Triggers a pass-on with no stone exchanged. Exceptionally rare (<1% of hands).
+**Absolute Hand:** **[House Rule]** A Trumper's hand guaranteed to win all 8 rounds before play begins: all eight trumps, or (when the Trumper leads round 1) the top trumps needed to draw every outstanding trump plus only top-sequence cards in the other suits. Holder may declare pre-round-1 (goodwill) or opposition may claim post-game during scrutiny. Triggers a pass-on with no stone exchanged. Exceptionally rare (<1% of hands).
 
 **Exhausted Trumps:** A situation where the Trumper holds all remaining cards of the Trump Suit. If the Trumper has **priority** and leads Trump, they must lead all remaining Trump from their hand before playing any other suit. Applies in both Open and Closed Trump (does not apply in PCC).
 
-**Spoilt Trumps:** When the opposition holds zero Trump cards between them from the deal. Triggers a pass-on with no stone exchanged, provided it is declared before the last card is played. False call: 1-stone penalty.
+**Spoilt Trumps:** When the Trumping team's opponents hold zero Trump cards between them from the deal. Detected automatically once trump is final: the cards are thrown in, no stone is exchanged, and the same dealer deals again.
 
 **Honest:** **[House Rule term]** A bid of 220 on 8 cards. Increments above are Honest 5 (225), Honest 10 (230), … up to Honest 25 (245), then 250, then PCC.
 
