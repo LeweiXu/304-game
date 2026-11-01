@@ -21,7 +21,7 @@ export default function Table({ game }: { game: Game }) {
       </div>
       <div className="table-middle">
         <Opponent view={view} seat={3} />
-        <Center view={view} pausing={pausing} onSkip={game.skipPause} />
+        <Center view={view} pausing={pausing} onContinue={game.resume} />
         <Opponent view={view} seat={1} />
       </div>
       <Controls view={view} pausing={pausing} onAct={game.act} />
@@ -32,17 +32,16 @@ export default function Table({ game }: { game: Game }) {
 
 function Scoreboard({ view }: { view: PlayerView }) {
   return (
-    <div className="scoreboard" aria-label="Stone left">
+    <div className="scoreboard" aria-label="Stone left, first team to give away all 10 wins" title="Stone left. First team to give away all 10 wins.">
       {[0, 1].map((team) => (
         <div key={team} className={`score team-${team}`}>
           <span className="score-name">{team === 0 ? 'Us' : 'Them'}</span>
           <span className="score-num">{view.stone[team]}</span>
           <span className="pips" aria-hidden="true">
-            {Array.from({ length: Math.max(10, view.stone[team]) }, (_, i) => <i key={i} className={i < view.stone[team] ? 'on' : ''} />)}
+            {Array.from({ length: 10 }, (_, i) => <i key={i} className={i < view.stone[team] ? 'on' : ''} />)}
           </span>
         </div>
       ))}
-      <p className="score-note">Stone left. First to 0 wins.</p>
     </div>
   );
 }
@@ -113,10 +112,10 @@ function TrickCards({ cards }: { cards: SeenCard[] }) {
     <div className="trick">
       {cards.map((c) => (
         <div key={c.seat} className={`trick-card at-${SEAT_POSITION[c.seat]}`}>
-          {c.card ? (
-            <Card card={c.card} tag={c.revealed ? 'Cut' : c.faceDown && c.seat === HUMAN ? 'Face down' : undefined} />
+          {c.card && (!c.faceDown || c.revealed) ? (
+            <Card card={c.card} tag={c.revealed ? 'Cut' : undefined} />
           ) : (
-            <CardBack size="table" label={`${SEAT_NAMES[c.seat]} played face down`} />
+            <CardBack size="table" label={`${SEAT_NAMES[c.seat]} played a card face down`} />
           )}
         </div>
       ))}
@@ -124,14 +123,14 @@ function TrickCards({ cards }: { cards: SeenCard[] }) {
   );
 }
 
-function Center({ view, pausing, onSkip }: { view: PlayerView; pausing: boolean; onSkip: () => void }) {
+function Center({ view, pausing, onContinue }: { view: PlayerView; pausing: boolean; onContinue: () => void }) {
   const p = view.play;
   if (p) {
     const showLast = pausing && p.lastTrick;
     const cards = showLast ? p.lastTrick!.cards : p.trick;
-    const hidden = showLast && p.lastTrick!.cards.some((c) => c.card === null);
+    const hidden = showLast && p.lastTrick!.cards.some((c) => c.faceDown && !c.revealed);
     return (
-      <div className="center" onClick={pausing ? onSkip : undefined}>
+      <div className="center">
         <p className="center-label">
           {showLast ? `Round ${p.lastTrick!.round} of 8` : view.phase === 'play' ? `Round ${p.round} of 8` : 'All 8 rounds played'}
           {!showLast && p.trick.length > 0 && <span>, led by {SEAT_NAMES[p.leader]}</span>}
@@ -143,6 +142,7 @@ function Center({ view, pausing, onSkip }: { view: PlayerView; pausing: boolean;
             {p.lastTrick!.revealedTrump && view.trump?.suit && <span>. Trump is {SUIT_SYMBOL[view.trump.suit]} {SUIT_NAME[view.trump.suit]}</span>}
           </p>
         )}
+        {showLast && <button type="button" className="btn primary" onClick={onContinue} autoFocus>Continue</button>}
       </div>
     );
   }

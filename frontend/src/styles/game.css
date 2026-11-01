@@ -49,16 +49,15 @@ button.card:disabled { cursor: default; }
 /* top row: scores, partner, game info */
 .table-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 12px; }
 .scoreboard { display: grid; gap: 4px; justify-self: start; }
-.score { display: grid; grid-template-columns: 2.6em 1.6em auto; align-items: center; gap: 6px; font-size: .78rem; }
+.score { display: grid; grid-template-columns: 3.4em 1.4em auto; align-items: center; column-gap: 8px; font-size: .78rem; }
 .score-name { font-weight: 700; }
 .score.team-0 .score-name { color: var(--accent); }
 .score.team-1 .score-name { color: var(--cool); }
 .score-num { font-weight: 800; font-size: 1rem; font-variant-numeric: tabular-nums; }
-.pips { display: flex; flex-wrap: wrap; gap: 2px; max-width: 110px; }
+.pips { display: flex; gap: 2px; }
 .pips i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--border); }
 .score.team-0 .pips i.on { background: var(--accent); border-color: var(--accent); }
 .score.team-1 .pips i.on { background: var(--cool); border-color: var(--cool); }
-.score-note { font-size: .68rem; color: var(--muted); }
 .game-info { justify-self: end; text-align: right; font-size: .76rem; display: grid; gap: 6px; justify-items: end; }
 .game-info dl { display: grid; gap: 2px; }
 .game-info dl div { display: flex; gap: 8px; justify-content: flex-end; }
@@ -96,10 +95,10 @@ button.card:disabled { cursor: default; }
 .center-title { font-size: 1.05rem; font-weight: 700; }
 .center-detail { font-size: .85rem; }
 .center-wait { font-size: .78rem; color: var(--muted); }
-.trick { position: relative; width: calc(var(--cw) * 3.7); height: calc(var(--cw) * 2.9); }
+.trick { position: relative; width: calc(var(--cw) * 3.7); height: calc(var(--cw) * 3.2); }
 .trick-card { position: absolute; left: 50%; top: 50%; --x: 0px; --y: 0px; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))); }
-.trick-card.at-bottom { --y: calc(var(--cw) * .62); }
-.trick-card.at-top { --y: calc(var(--cw) * -.62); }
+.trick-card.at-bottom { --y: calc(var(--cw) * .76); }
+.trick-card.at-top { --y: calc(var(--cw) * -.76); }
 .trick-card.at-left { --x: calc(var(--cw) * -1.15); }
 .trick-card.at-right { --x: calc(var(--cw) * 1.15); }
 .trick-result { font-size: .8rem; font-weight: 600; background: var(--elev); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; }
@@ -139,7 +138,7 @@ button.card:disabled { cursor: default; }
   .scoreboard { grid-area: score; }
   .game-info { grid-area: info; }
   .table-top .player-top { grid-area: north; }
-  .pips, .score-note { display: none; }
+  .pips { display: none; }
   .score { grid-template-columns: auto auto; }
   .game-info dl div:nth-child(-n+2) { display: none; }
   .player-left .backs, .player-right .backs { display: none; }

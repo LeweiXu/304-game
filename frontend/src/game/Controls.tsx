@@ -64,7 +64,7 @@ function SeatTag({ view }: { view: PlayerView }) {
 
 function prompt(view: PlayerView, myTurn: boolean, pausing: boolean): string {
   if (view.phase === 'over') return '';
-  if (pausing) return 'Click the table to carry on';
+  if (pausing) return 'Have a look at the trick, then click Continue.';
   if (!myTurn) return view.toAct !== null ? `Waiting for ${SEAT_NAMES[view.toAct]}` : '';
   switch (view.phase) {
     case 'bid4': return `Your bid. You hold ${handPoints(view.hand)} points in 4 cards.`;

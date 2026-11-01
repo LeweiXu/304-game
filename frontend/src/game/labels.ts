@@ -33,7 +33,7 @@ export function endSummary(end: GameEnd): string {
       const who = teamName(end.bidTeam);
       return end.made
         ? `${who} made ${end.bid.value} with ${end.points[end.bidTeam]} points and gave away ${end.stone} stone.`
-        : `${who} needed ${end.bid.value} but took ${end.points[end.bidTeam]}. They receive ${end.stone} stone.`;
+        : `${who} needed ${end.bid.value} but took ${end.points[end.bidTeam]}, so ${teamName(1 - end.bidTeam)} give away ${end.stone} stone.`;
     }
   }
 }
