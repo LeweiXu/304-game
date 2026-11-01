@@ -12,6 +12,10 @@ const CARD_INDEX = Object.fromEntries(PACK.map((c, i) => [c, i])) as Record<Card
 const BID_INDEX = Object.fromEntries(BID_VALUES.map((v, i) => [v, i])) as Record<number, number>;
 const PHASES = ['bid4', 'trump4', 'bid8', 'trump8', 'declare', 'play', 'over'] as const;
 const SUIT_INDEX = { c: 0, d: 1, h: 2, s: 3 } as const;
+/** Speeches kept per betting round. Real auctions are far shorter; if one ever runs longer, the latest are kept. */
+export const AUCTION_SLOTS = 24;
+const SPEECH_SIZE = 4 + 3 + 15 + 1;
+const TRICK_SIZE = 4 + 4 + 1 + 1 + 4 * 33;
 
 /** Name, size and meaning of every block, in order. Offsets are computed below. */
 const BLOCKS: [name: string, size: number, meaning: string][] = [
@@ -19,6 +23,7 @@ const BLOCKS: [name: string, size: number, meaning: string][] = [
   ['indicator', 32, 'my face-down trump card, if I am the trumper and it is still on the table'],
   ['phase', 7, 'one-hot: bid4, trump4, bid8, trump8, declare, play, over'],
   ['dealer', 4, 'dealer, one-hot by relative seat'],
+  ['priority', 4, 'priority player (dealer\'s right: speaks first, leads round 1), relative seat'],
   ['to_act', 4, 'who is to act, one-hot by relative seat'],
   ['stone', 2, 'stone left for my team and the other team, divided by 10'],
   ['hand_counts', 4, 'cards in hand per relative seat, divided by 8'],
@@ -31,13 +36,18 @@ const BLOCKS: [name: string, size: number, meaning: string][] = [
   ['bid8_seat', 4, 'winner of the 8-card bid, relative seat'],
   ['speeches', 20, 'per relative seat: [has spoken this round, last speech was bid, pass, partner, none]'],
   ['speaking_for_partner', 1, 'I am bidding in my partner\'s seat after they said "partner"'],
+  ['auction4', AUCTION_SLOTS * SPEECH_SIZE, `every 4-card speech in order, ${AUCTION_SLOTS} slots of [relative seat 4, bid/pass/partner 3, bid value 15, spoke in partner's seat 1]; unused slots zero`],
+  ['auction8', AUCTION_SLOTS * SPEECH_SIZE, 'every 8-card speech in order, same encoding'],
   ['trumper', 5, 'trumper by relative seat, last slot = none yet'],
   ['trump_suit', 5, 'trump suit if I know it (I am trumper or trump is open), last slot = unknown'],
-  ['trump_flags', 3, '[trump is open, the folded trump is still on the table, I am the trumper]'],
+  ['trump_flags', 4, '[trump is open, it was declared open (not revealed by a cut), the folded trump is still on the table, I am the trumper]'],
+  ['folded_card', 32, 'which card the trumper folded, if I know it (I am the trumper, or it was flipped / shown / played face up)'],
   ['round', 8, 'current round 1-8, one-hot (all zero outside play)'],
   ['leader', 4, 'leader of the current trick, relative seat'],
+  ['led_suit', 4, 'suit led to the current trick (all zero before the lead)'],
   ['trick', 136, 'current trick, per relative seat: [played, played face down and hidden from me, card 32 bits]'],
-  ['seen', 128, 'per relative seat: every card I have seen them play this game (face up, revealed, or my own)'],
+  ['tricks', 8 * TRICK_SIZE, `every completed trick, slot r-1 for round r: [leader 4, winner 4, points I saw /304, trump revealed here 1, per relative seat: card 32 + face down and unseen 1]`],
+  ['seen', 128, 'per relative seat: every card I have seen them play this game (a summary of the tricks block plus the current trick)'],
   ['hidden_counts', 4, 'per relative seat: face-down cards they played that I never saw, divided by 8'],
   ['tricks_won', 2, 'tricks won by my team / the other team, divided by 8'],
   ['points', 2, 'points I can see each team has won, divided by 304'],
@@ -68,6 +78,7 @@ export function encodeView(view: PlayerView, out?: Float32Array, base = 0): Floa
   if (view.trump?.indicator) o[at('indicator') + CARD_INDEX[view.trump.indicator]] = 1;
   o[at('phase') + PHASES.indexOf(view.phase)] = 1;
   o[at('dealer') + rel(view.dealer)] = 1;
+  o[at('priority') + rel(view.priority)] = 1;
   if (view.toAct !== null) o[at('to_act') + rel(view.toAct)] = 1;
   o[at('stone')] = view.stone[myTeam] / 10;
   o[at('stone') + 1] = view.stone[1 - myTeam] / 10;
@@ -89,20 +100,33 @@ export function encodeView(view: PlayerView, out?: Float32Array, base = 0): Floa
     o[k + 1 + (last[r] === 'bid' ? 0 : last[r] === 'pass' ? 1 : last[r] === 'partner' ? 2 : 3)] = 1;
   }
   if (b.speaker !== b.turn && b.speaker === me) o[at('speaking_for_partner')] = 1;
+  for (const stage of [4, 8] as const) {
+    const speeches = view.auction.filter((sp) => sp.stage === stage).slice(-AUCTION_SLOTS);
+    speeches.forEach((sp, k) => {
+      const q = at(stage === 4 ? 'auction4' : 'auction8') + k * SPEECH_SIZE;
+      o[q + rel(sp.seat)] = 1;
+      o[q + 4 + (sp.action === 'bid' ? 0 : sp.action === 'pass' ? 1 : 2)] = 1;
+      if (sp.value !== undefined) o[q + 7 + BID_INDEX[sp.value]] = 1;
+      if (sp.inSeat !== undefined) o[q + 22] = 1;
+    });
+  }
 
   const t = view.trump;
   o[at('trumper') + (t ? rel(t.seat) : 4)] = 1;
   o[at('trump_suit') + (t?.suit ? SUIT_INDEX[t.suit] : 4)] = 1;
   if (t) {
     o[at('trump_flags')] = t.open ? 1 : 0;
-    o[at('trump_flags') + 1] = t.indicatorOnTable ? 1 : 0;
-    o[at('trump_flags') + 2] = t.seat === me ? 1 : 0;
+    o[at('trump_flags') + 1] = t.declaredOpen ? 1 : 0;
+    o[at('trump_flags') + 2] = t.indicatorOnTable ? 1 : 0;
+    o[at('trump_flags') + 3] = t.seat === me ? 1 : 0;
+    if (t.folded) o[at('folded_card') + CARD_INDEX[t.folded]] = 1;
   }
 
   const p = view.play;
   if (p) {
     if (view.phase === 'play') o[at('round') + Math.min(p.round, 8) - 1] = 1;
     o[at('leader') + rel(p.leader)] = 1;
+    if (p.ledSuit) o[at('led_suit') + SUIT_INDEX[p.ledSuit]] = 1;
     for (const c of p.trick) {
       const k = at('trick') + rel(c.seat) * 34;
       o[k] = 1;
@@ -110,6 +134,16 @@ export function encodeView(view: PlayerView, out?: Float32Array, base = 0): Floa
       else o[k + 2 + CARD_INDEX[c.card]] = 1;
     }
     for (const tr of p.tricks) {
+      const q = at('tricks') + (tr.round - 1) * TRICK_SIZE;
+      o[q + rel(tr.leader)] = 1;
+      o[q + 4 + rel(tr.winner)] = 1;
+      o[q + 8] = tr.visiblePoints / 304;
+      o[q + 9] = tr.revealedTrump ? 1 : 0;
+      for (const c of tr.cards) {
+        const k = q + 10 + rel(c.seat) * 33;
+        if (c.card === null) o[k + 32] = 1;
+        else o[k + CARD_INDEX[c.card]] = 1;
+      }
       for (const c of tr.cards) {
         if (c.card !== null) o[at('seen') + rel(c.seat) * 32 + CARD_INDEX[c.card]] = 1;
         else o[at('hidden_counts') + rel(c.seat)] += 1 / 8;

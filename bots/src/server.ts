@@ -9,6 +9,7 @@
 //   3 STEP   payload: numEnvs x int32 actions  reply: batch
 //   4 STATS  payload: empty                    reply: JSON stats
 //   5 CLOSE  payload: empty                    reply: empty, then the process exits
+//   6 VIEWS  payload: empty                    reply: JSON array, the full PlayerView for the seat to act in each slot
 //
 // A batch is the buffers back to back, floats first so they stay aligned:
 //   obs    numEnvs * obsSize  float32
@@ -35,12 +36,16 @@ const json = (v: unknown) => Buffer.from(JSON.stringify(v), 'utf8');
 const bytes = (a: ArrayBufferView) => new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
 
 function sendBatch(e: VecEnv) {
+  // Written straight from the env's buffers, no copy. Safe because the client only
+  // sends the next command after reading this whole reply, so these buffers aren't
+  // touched again until the write has gone through.
   const parts = [bytes(e.obs), bytes(e.reward), bytes(e.mask), bytes(e.seat), bytes(e.done)];
   const total = parts.reduce((n, p) => n + p.byteLength, 0);
   const head = Buffer.alloc(8);
   head.writeUInt32LE(0, 0);
   head.writeUInt32LE(total, 4);
-  process.stdout.write(Buffer.concat([head, ...parts], 8 + total));
+  process.stdout.write(head);
+  for (const part of parts) process.stdout.write(part);
 }
 
 function handle(cmd: number, payload: Buffer) {
@@ -62,6 +67,9 @@ function handle(cmd: number, payload: Buffer) {
     }
     case 4:
       return send(0, json(env?.stats ?? {}));
+    case 6:
+      if (!env) throw new Error('INIT first');
+      return send(0, json(env.views()));
     case 5:
       send(0, new Uint8Array(0));
       process.stdout.end(() => process.exit(0));

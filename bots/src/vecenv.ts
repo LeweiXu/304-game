@@ -16,7 +16,7 @@
 // Pass-ons and redeals give 0. Nothing in between: reward only arrives at done.
 import {
   ACTION_COUNT, decodeAction, isLegal, legalActions, legalMask, makeRng, mixSeed, newMatch, nextGame, step, teamOf, toAct, viewFor,
-  type MatchState, type Seat,
+  type MatchState, type PlayerView, type Seat,
 } from '../../engine/src';
 import { encodeView, OBS_SIZE } from './encode';
 import { naiveBot } from './naive';
@@ -93,6 +93,11 @@ export class VecEnv {
       this.settle(i);
       this.write(i);
     }
+  }
+
+  /** The full structured view (engine PlayerView) for the seat to act in every slot. Slower than obs; for debugging or custom encoders. */
+  views(): PlayerView[] {
+    return this.matches.map((m) => viewFor(m, toAct(m.game)!));
   }
 
   /** Plays bot seats and deals new games until slot i waits on an agent decision. */

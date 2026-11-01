@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { apply, legalActions, makeRng, newMatch, toAct, viewFor, type MatchState, type Seat } from '../../engine/src';
+import { apply, legalActions, makeRng, newMatch, PACK, toAct, viewFor, type MatchState, type Seat } from '../../engine/src';
 import { encodeView, OBS_LAYOUT, OBS_SIZE } from '../src/encode';
 
 function randomState(seed: number, steps: number): MatchState {
@@ -35,6 +35,35 @@ describe('observation encoding', () => {
     [other.game.hands[1], other.game.hands[3]] = [other.game.hands[3], other.game.hands[1]];
     expect(encodeView(viewFor(other, 0))).toEqual(encodeView(viewFor(m, 0)));
     expect(encodeView(viewFor(other, 1))).not.toEqual(encodeView(viewFor(m, 1)));
+  });
+
+  it('records every completed trick and every speech', () => {
+    // Play random moves until two tricks are done, then check seat 0's view of trick 1.
+    let m: MatchState | null = null;
+    for (let seed = 21; !m; seed++) {
+      const rng = makeRng(seed);
+      let x = newMatch(seed);
+      while (!(x.game.phase === 'play' && x.game.play!.tricks.length >= 2) && x.game.phase !== 'over') {
+        const legal = legalActions(x.game);
+        x = apply(x, legal[rng.int(legal.length)]);
+      }
+      if (x.game.phase === 'play') m = x;
+    }
+    const v = viewFor(m, 0);
+    const o = encodeView(v);
+    const block = (name: string) => OBS_LAYOUT.find((b) => b.name === name)!;
+    const tr = v.play!.tricks[0];
+    const q = block('tricks').offset; // slot for round 1
+    expect(o[q + tr.leader]).toBe(1); // seat 0's view, so relative seat == absolute seat
+    expect(o[q + 4 + tr.winner]).toBe(1);
+    for (const c of tr.cards) {
+      const k = q + 10 + c.seat * 33;
+      if (c.card) expect(o[k + PACK.indexOf(c.card)]).toBe(1);
+      else expect(o[k + 32]).toBe(1);
+    }
+    const a4 = block('auction4').offset;
+    const first = v.auction[0];
+    expect(o[a4 + first.seat]).toBe(1);
   });
 
   it('stays finite and in a sane range across many states', () => {

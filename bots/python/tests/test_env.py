@@ -60,3 +60,14 @@ def test_multi_worker():
         for _ in range(50):
             b = env.step(random_actions(b.mask, rng))
         assert b.obs.shape[0] == 12
+
+
+def test_views_match_the_batch():
+    with VecEnv(num_envs=4, seed=6) as env:
+        b = env.reset()
+        views = env.views()
+        assert len(views) == 4
+        for i, v in enumerate(views):
+            assert v["seat"] == b.seat[i]
+            assert sorted(v["legalIds"]) == sorted(np.flatnonzero(b.mask[i]).tolist())
+            assert "auction" in v and "trump" in v and "play" in v

@@ -46,10 +46,11 @@ while True:
 - Rewards are stone given away, zero-sum per game: the team that gave away k stone gets +k on both seats, the other team -k. Pass-ons and redeals give 0.
 - `check_legal=True` makes the server reject illegal actions instead of trusting the mask.
 - The observation layout (block names, offsets, meanings) comes back as `env.layout`.
+- `env.views()` returns the full structured view (everything the seat to act can see or remember) as dicts. Slower; for debugging or trying other encodings.
 
 ## Wire protocol
 
-Frames are `[u32 cmd/status][u32 length][payload]`, little-endian, over the child's stdin/stdout. Commands: 1 INIT (JSON config), 2 RESET, 3 STEP (int32 actions), 4 STATS, 5 CLOSE. A batch reply is `obs f32 | reward f32 | mask u8 | seat i8 | done u8`, back to back. Details in `src/server.ts`.
+Frames are `[u32 cmd/status][u32 length][payload]`, little-endian, over the child's stdin/stdout. Commands: 1 INIT (JSON config), 2 RESET, 3 STEP (int32 actions), 4 STATS, 5 CLOSE, 6 VIEWS (JSON PlayerViews). A batch reply is `obs f32 | reward f32 | mask u8 | seat i8 | done u8`, back to back. Details in `src/server.ts`.
 
 ## Speed
 
@@ -57,8 +58,8 @@ Random legal actions, no network, on the dev machine (Core Ultra 7 265K, 20 core
 
 | setup | agent decisions/s | games/s |
 |---|---|---|
-| self-play, 1 worker x 256 games | ~160k | ~3.5k |
-| self-play, 8 workers x 256 | ~400k | ~8.8k |
-| one agent seat vs naive bots, 16 x 256 | ~330k | ~27k |
+| self-play, 1 worker x 256 games | ~97k | ~2.1k |
+| self-play, 8 workers x 256 | ~365k | ~8.1k |
+| one agent seat vs naive bots, 16 x 256 | ~275k | ~22k |
 
-Past about 8 workers the single Python thread becomes the limit. That's far more than a GPU learner will consume, so it hasn't been worth optimising.
+The observation is 2746 floats (about 11 KB per game per step), so past about 8 workers memory bandwidth on the Python side is the limit. Replies are read straight into the final numpy arrays by parallel threads, with no extra copies. That's far more than a GPU learner will consume.
