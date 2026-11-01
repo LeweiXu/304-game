@@ -41,11 +41,10 @@ describe('PCC', () => {
     expect(m.game.play!.tricks[0].cards.map((c) => c.seat)).not.toContain(m.game.pccOut);
   });
 
-  it('on 4 cards: 8-card betting is skipped', () => {
-    let m = run(matchWithDealer(D), [{ type: 'pcc' }, pass, pass, pass]);
-    m = apply(m, { type: 'trump', card: m.game.hands[A][0] });
-    expect(m.game.phase).toBe('show');
-    expect(m.game.hands[A]).toHaveLength(8);
+  it('can only be bid on 8 cards', () => {
+    const m = matchWithDealer(D);
+    expect(types(m)).not.toContain('pcc');
+    expect(types(toBid8())).toContain('pcc');
   });
 
   it('is won by taking all 8 tricks (5 stone), lost the moment the opponents take one', () => {

@@ -112,7 +112,7 @@ button.card:disabled { cursor: default; }
 
 /* bottom: you */
 .you { display: grid; justify-items: center; gap: 8px; }
-.you-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.you-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
 .prompt { font-size: .82rem; color: var(--muted); }
 .panel { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .stepper { display: inline-grid; grid-template-columns: 34px minmax(7.5em, auto) 34px; align-items: center; background: var(--elev); border: 1px solid var(--border); border-radius: 999px; }

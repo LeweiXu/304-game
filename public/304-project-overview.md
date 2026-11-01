@@ -24,9 +24,9 @@ The engine is the single source of truth for the rules. The website, the bots an
 
 ## How a game flows (engine phases)
 
-1. **bid4**: betting on the first 4 cards. Actions: bid (160-250), PCC, pass, partner (ask your partner to bid in your seat; only the first two speakers, first speech only), redeal (priority player with under 15 points).
+1. **bid4**: betting on the first 4 cards. Actions: bid (160-250), pass, partner (ask your partner to bid in your seat; only the first two speakers, first speech only), redeal (priority player with under 15 points).
 2. **trump4**: the 4-card winner places one card face down; its suit is trump.
-3. Second deal (automatic), then **bid8**: betting on 8 cards. Bid (220 "Honest" to 250), PCC, pass, pass-on (under 25 points, first speech only). Skipped after a PCC bid on 4 cards.
+3. Second deal (automatic), then **bid8**: betting on 8 cards. Bid (220 "Honest" to 250), PCC, pass, pass-on (under 25 points, first speech only).
 4. **trump8**: only if someone bid on 8 cards; the old trumper takes their card back and the new one picks.
 5. **declare**: the trumper chooses closed trump (suit stays secret) or open trump. A trumper holding all eight trumps may instead declare an absolute hand (a pass-on). Skipped for PCC.
 6. **show**: open trump declared by a trumper without priority, or any PCC: the trumper picks one trump card from their hand to show the table.
@@ -57,7 +57,7 @@ The website also has display settings: "assistance" (points per trick and runnin
 ### Interpretation calls the code makes
 
 - **Stone only goes down.** Whichever team wins the game removes stone from its own pile. (rules.md phrases a failed bid as the bidders "receiving" stone; it means the opponents give theirs away. rules.md says this explicitly.)
-- **Bids above 250 are PCC only.** PCC is allowed on any speech in either round. A PCC on 4 cards skips 8-card betting, since nothing outranks it.
+- **Bids above 250 are PCC only.** PCC can only be bid on 8 cards, on any speech.
 - **A PCC game ends as soon as the opponents win a round**, because it's lost at that point.
 - **The holder skip on 8 cards.** In 8-card betting, only an 8-card bid counts as the "current bid" for the holder skip (§B-2), so the 4-card trumper can still speak on 8 cards.
 - **Open trump.** A trumper without priority shows a trump card of their choice; a trumper with priority reveals by leading trump in round 1. For PCC the trumper always shows a card, and isn't forced to lead trump.

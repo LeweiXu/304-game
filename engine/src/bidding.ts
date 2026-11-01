@@ -49,8 +49,8 @@ export function legalBiddingActions(g: GameState): Action[] {
   const b = g.bidding;
   const s = b.speaker;
   const out: Action[] = legalBidValues(g).map((value) => ({ type: 'bid', value }));
-  // PCC is legal on any speech in either round (rules.md: in practice only ever bid on 8 cards).
-  if (b.high?.value !== PCC) out.push({ type: 'pcc' });
+  // PCC can only be bid on 8 cards, on any speech.
+  if (b.stage === 8 && b.high?.value !== PCC) out.push({ type: 'pcc' });
   out.push({ type: 'pass' });
 
   const speakingForPartner = s !== b.turn;

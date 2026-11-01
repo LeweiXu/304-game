@@ -4,27 +4,16 @@
 .play-head h1 { font-weight: 800; font-size: 2.2rem; letter-spacing: -.02em; margin-bottom: .2em; }
 .play-head p { color: var(--muted); margin: 0; }
 .game-box {
-  /* A wooden card table: light oak in light mode, dark walnut in dark mode, whatever the colour theme. */
-  --wood: #c49a66;
-  --wood-grain: rgba(110, 66, 28, .20);
-  --wood-shine: rgba(255, 238, 205, .10);
-  --wood-glow: rgba(255, 236, 200, .28);
+  /* A wooden card table: pale wood in light mode, walnut in dark mode, whatever the colour theme.
+     The grain is an SVG noise texture (public/wood-*.svg), drawn once and scaled to fit. */
   height: clamp(620px, calc(100vh - var(--nav-h) - 150px), 900px); width: 100%; overflow: hidden; position: relative;
-  background:
-    radial-gradient(ellipse at 50% 45%, var(--wood-glow) 0%, transparent 62%),
-    repeating-linear-gradient(91deg, var(--wood-grain) 0 2px, transparent 2px 9px, var(--wood-shine) 9px 11px, transparent 11px 21px),
-    repeating-linear-gradient(89deg, transparent 0 37px, rgba(0, 0, 0, .06) 37px 39px, transparent 39px 83px),
-    var(--wood);
-  border: 1px solid rgba(40, 22, 8, .45); border-radius: 16px;
-  box-shadow: inset 0 0 0 6px rgba(40, 22, 8, .16), inset 0 0 60px rgba(40, 22, 8, .28), 0 10px 30px -18px rgba(0, 0, 0, .5);
+  background: #cfbfab url('/wood-light.svg') center / cover no-repeat;
+  border: 1px solid rgba(60, 40, 20, .35); border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25), inset 0 0 80px rgba(60, 40, 20, .22), 0 10px 30px -18px rgba(0, 0, 0, .5);
 }
-:root[data-mode="dark"] .game-box {
-  --wood: #3b2618; --wood-grain: rgba(0, 0, 0, .30); --wood-shine: rgba(255, 200, 150, .05); --wood-glow: rgba(255, 190, 130, .10);
-}
+:root[data-mode="dark"] .game-box { background: #3d2b1f url('/wood-dark.svg') center / cover no-repeat; border-color: rgba(0, 0, 0, .5); box-shadow: inset 0 0 80px rgba(0, 0, 0, .45), 0 10px 30px -18px rgba(0, 0, 0, .7); }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-mode="light"]) .game-box {
-    --wood: #3b2618; --wood-grain: rgba(0, 0, 0, .30); --wood-shine: rgba(255, 200, 150, .05); --wood-glow: rgba(255, 190, 130, .10);
-  }
+  :root:not([data-mode="light"]) .game-box { background: #3d2b1f url('/wood-dark.svg') center / cover no-repeat; border-color: rgba(0, 0, 0, .5); box-shadow: inset 0 0 80px rgba(0, 0, 0, .45), 0 10px 30px -18px rgba(0, 0, 0, .7); }
 }
 /* Text that sits straight on the wood needs more contrast than the theme's muted grey. */
 .game-box { --muted: #4b3421; }

@@ -459,8 +459,6 @@ function chooseTrump(g: GameState, card: Card) {
       g.hands[s] = [...g.hands[s], ...g.stock.slice(i * 4, i * 4 + 4)];
     }
     g.stock = [];
-    // Nothing outranks a PCC bid made on 4 cards, so 8-card betting is skipped.
-    if (isPcc(g)) return startPcc(g);
     g.bidding = newBidding(8, g.dealer);
     g.phase = 'bid8';
   } else if (isPcc(g)) {

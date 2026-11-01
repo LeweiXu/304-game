@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" preserveAspectRatio="none">
+  <!-- Wood texture for the game table: long soft grain, waved around knots by a slow displacement.
+       The noise is generated over a larger area than shown so the displacement never samples empty edges. -->
+  <filter id="grain" filterUnits="userSpaceOnUse" x="-200" y="-200" width="2000" height="1400" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.0012 0.03" numOctaves="5" seed="11" result="streaks"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.0016 0.0035" numOctaves="3" seed="14" result="warp"/>
+    <feDisplacementMap in="streaks" in2="warp" scale="120" xChannelSelector="R" yChannelSelector="G" result="waved"/>
+    <feColorMatrix in="waved" type="matrix" values="0.13 0 0 0 0.753  0.13 0 0 0 0.685  0.13 0 0 0 0.610  0 0 0 0 1" result="wood"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.003 0.22" numOctaves="2" seed="18" result="fine"/>
+    <feDisplacementMap in="fine" in2="warp" scale="120" xChannelSelector="R" yChannelSelector="G" result="fineWaved"/>
+    <feColorMatrix in="fineWaved" type="matrix" values="0 0 0 0 1.0  0 0 0 0 0.965  0 0 0 0 0.91  0.8 0 0 0 -0.448" result="lines"/>
+    <feComposite in="lines" in2="wood" operator="over" result="grained"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.0009 0.002" numOctaves="2" seed="22" result="tone"/>
+    <feColorMatrix in="tone" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.22 0 0 0 -0.110" result="shade"/>
+    <feComposite in="shade" in2="grained" operator="over"/>
+  </filter>
+  <rect x="-200" y="-200" width="2000" height="1400" filter="url(#grain)"/>
+</svg>

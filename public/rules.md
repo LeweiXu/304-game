@@ -122,7 +122,7 @@ Bids below 200 are subject to two constraints:
 1. **§B-6 First speech only.** A player can bid below 200 only on their first opportunity to speak. After they have bet, passed, or had their first speech consumed via partnering, their minimum bid becomes 200.
 2. **§B-7 Cannot undercut your own partner.** If your partner currently holds the highest bid, you cannot bid below 200 — you must bid 200 or higher to take over, or pass. Bidding below 200 to overtake the *opposing* team's bid (e.g. bidding 180 over their 170 on your first speech) is fine.
 
-There is no upper limit on 4-card bids in principle — a player could theoretically bid 220 or higher, including PCC, on 4 cards. In practice, this is extremely unwise (you are committing without seeing 4 of your cards), and bids of 220+ on 4 cards are virtually never made.
+There is no upper limit on 4-card bids in principle — a player could theoretically bid 220 or higher on 4 cards (PCC, though, can only be bid on 8 cards). In practice, this is extremely unwise (you are committing without seeing 4 of your cards), and bids of 220+ on 4 cards are virtually never made.
 
 > **Worked Example — 4-Card Betting (Simple)**
 >
