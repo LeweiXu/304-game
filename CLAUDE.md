@@ -18,6 +18,13 @@ docs/DEPLOYMENT.md   how the hosting fits together
 design-*.html throwaway design mockups at the repo root, delete once a direction is picked
 ```
 
+## Decisions so far
+
+- Frontend: React (Vite + TypeScript). Backend: FastAPI. The Node health-check script in `backend/` is a stand-in until the FastAPI app exists.
+- Look and feel follows the original site from the fork: parchment and cinnabar palette, Crimson Pro body text, Inter headings, light and dark themes. Adapt it, don't replace it.
+- The play page will be a box for the game inside that site shell. Its design is still open.
+- Bots: a naive placeholder bot for now. Later the plan is RL-trained agents at several difficulty levels, so the engine has to be usable as a training environment (see below).
+
 ## Rules are the source of truth
 
 - [docs/rules/rules.md](docs/rules/rules.md): the house rules, written for people. Bidding, trump, play, caps, scoring.
@@ -32,6 +39,7 @@ If code and these docs disagree, the docs win, or we change the docs on purpose 
 - Hidden information matters. Each seat only ever sees its own projected view of the state (own hand, public plays, face-down trump hidden). Bots get that same view, never the full deal, so they can't cheat and so the same code works later when a server holds the real state.
 - Bots are deterministic given (their view, rng seed). Use a seeded RNG, never `Math.random()` inside engine or bot code.
 - Heavy bot thinking runs in a Web Worker so the table never freezes.
+- Keep it RL-friendly: a fixed, enumerable action space (every possible bid, pass, partner, card, caps call gets a stable index), a legal-action mask per seat, an observation built only from that seat's view, and a cheap `step`. Training will probably happen in Python, so don't let the engine depend on anything browser-only.
 
 ## Hosting
 
