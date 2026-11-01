@@ -2,11 +2,11 @@
 
 A site for playing 304, the Sri Lankan four-player partnership trick-taking game, against bots (and later, other people).
 
-Early days: the site shell and the rules page are up, the game engine isn't plugged in yet.
+You can play full matches against a simple bot. Caps and PCC aren't in yet.
 
 - `frontend/` - the React site (play page, rules page, themes)
 - `backend/` - FastAPI server on the homeserver, health check only for now
-- `engine/` - the game engine and bots, coming separately
+- `engine/` - the rules engine and bots (TypeScript, no dependencies)
 - `docs/rules/` - the house rules and the formal specs the engine has to follow
 
 ## Running it locally
@@ -30,7 +30,7 @@ npm run dev                      # http://localhost:5173
 
 The frontend finds the backend through `VITE_API_BASE`: `frontend/.env.development` points at `http://localhost:8003`, `frontend/.env.production` at `https://304-api.leweixu.com`.
 
-Tests: `npm test` in `frontend/`, `~/venvs/304-venv/bin/python -m pytest` in `backend/`.
+Tests: `npm test` in `engine/` and `frontend/` (run `npm install` in each first), `~/venvs/304-venv/bin/python -m pytest` in `backend/`.
 
 ## Where it runs in production
 

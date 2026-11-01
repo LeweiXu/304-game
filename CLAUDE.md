@@ -11,7 +11,7 @@ frontend/     React + Vite + TS site: play page (game frame), rules page, themes
   vercel.json, .env.*   Vercel config, API base url per environment
 backend/      FastAPI app (main.py). Health check only until multiplayer.
   304-api.service   systemd user unit installed on the homeserver
-engine/       the game engine and bots. Not created yet; built separately from the site work.
+engine/       rules engine + bots, pure TS, no runtime deps. The frontend imports it as `@engine`. See engine/README.md
 deploy.sh     pushes backend/ to the homeserver, installs deps, restarts it
 docs/rules/   the rules. Source of truth for the engine and for the rules page.
 docs/DEPLOYMENT.md   how the hosting fits together
@@ -23,7 +23,8 @@ docs/DEPLOYMENT.md   how the hosting fits together
 - Look and feel comes from the original site in the fork: Crimson Pro body, Inter headings, house-rule badges, § tags. Four colour themes (graphite default, parchment, tea, indigo), each with light and dark; users pick in the nav.
 - The rules page renders `docs/rules/rules.md` directly, so rules changes are markdown edits.
 - The play page will be a box for the game inside that site shell. Its design is still open.
-- Bots: a naive placeholder bot for now. Later the plan is RL-trained agents at several difficulty levels, so the engine has to be usable as a training environment (see below).
+- Bots: `engine/src/bots/naive.ts` is the placeholder. Later the plan is RL-trained agents at several difficulty levels, so the engine has to stay usable as a training environment (see below).
+- Not implemented yet: caps, PCC, absolute hand, Spoilt Trumps calls, penalties. Games always play all 8 rounds.
 
 ## Rules are the source of truth
 
@@ -39,7 +40,8 @@ If code and these docs disagree, the docs win, or we change the docs on purpose 
 - Hidden information matters. Each seat only ever sees its own projected view of the state (own hand, public plays, face-down trump hidden). Bots get that same view, never the full deal, so they can't cheat and so the same code works later when a server holds the real state.
 - Bots are deterministic given (their view, rng seed). Use a seeded RNG, never `Math.random()` inside engine or bot code.
 - Heavy bot thinking runs in a Web Worker so the table never freezes.
-- Keep it RL-friendly: a fixed, enumerable action space (every possible bid, pass, partner, card, caps call gets a stable index), a legal-action mask per seat, an observation built only from that seat's view, and a cheap `step`. Training will probably happen in Python, so don't let the engine depend on anything browser-only.
+- Keep it RL-friendly: `engine/src/actions.ts` numbers every action and builds a legal mask, `viewFor` is the observation, `apply` is the step. Training will probably happen in Python, so don't let the engine depend on anything browser-only.
+- `legalActions` is the single authority on what's allowed. UI and bots pick from it; never re-derive rules in the frontend.
 
 ## Hosting
 
@@ -47,7 +49,7 @@ If code and these docs disagree, the docs win, or we change the docs on purpose 
 - Backend: homeserver (`homeserver` ssh alias) at `~/304_Project`, systemd user service `304-api` on port 8003, exposed as https://304-api.leweixu.com through the shared Cloudflare tunnel. Deploy with `./deploy.sh`. Python 3.12 venv at `~/venv-304`, config in `~/304-api.env`.
 - Same setup as the logarium and webnovels projects in `~/personal_projects/`. Details in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-Local dev: backend `uvicorn main:app --reload --port 8003` from the `~/venvs/304-venv` venv, frontend `npm run dev` (port 5173). Tests: `npm test` in frontend, `pytest` in backend. See the README.
+Local dev: backend `uvicorn main:app --reload --port 8003` from the `~/venvs/304-venv` venv, frontend `npm run dev` (port 5173). Tests: `npm test` in engine and frontend, `pytest` in backend. See the README.
 
 ## Working here
 

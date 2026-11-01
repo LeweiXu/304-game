@@ -1,0 +1,156 @@
+/* The game table. Sizes hang off --cw (card width), which scales with the box. */
+.table {
+  container-type: size; position: relative; height: 100%; padding: 14px 16px 12px;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 6px;
+  font-family: var(--font-heading);
+  --cw: clamp(36px, min(6.4cqw, 9.5cqh), 76px);
+}
+.table p { margin: 0; }
+
+/* buttons */
+.btn {
+  font-family: var(--font-heading); font-size: .85rem; font-weight: 600; padding: 8px 16px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--elev); color: var(--text); cursor: pointer; white-space: nowrap;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn.primary:hover { filter: brightness(1.08); }
+.link-btn { background: none; border: 0; padding: 0; font: inherit; font-size: .75rem; color: var(--muted); text-decoration: underline; cursor: pointer; }
+
+/* cards */
+.card {
+  position: relative; display: inline-block; flex: none; padding: 0; width: var(--cw); height: calc(var(--cw) * 1.4);
+  border-radius: calc(var(--cw) * .1); background: var(--elev); border: 1px solid var(--border);
+  box-shadow: 0 1px 2px var(--shadow); color: var(--text); font-family: var(--font-heading); text-align: left;
+}
+.card.red { color: var(--red); }
+.card-small { width: calc(var(--cw) * .58); height: calc(var(--cw) * .81); border-radius: calc(var(--cw) * .07); }
+.card-hand { width: calc(var(--cw) * 1.12); height: calc(var(--cw) * 1.57); }
+.card .corner { position: absolute; top: 5%; left: 9%; display: flex; flex-direction: column; align-items: center; line-height: 1; }
+.card .corner b { font-size: calc(var(--cw) * .27); font-weight: 700; }
+.card .corner i { font-style: normal; font-size: calc(var(--cw) * .22); }
+.card-hand .corner b { font-size: calc(var(--cw) * .3); }
+.card .pip { position: absolute; right: 9%; bottom: 5%; font-size: calc(var(--cw) * .55); line-height: 1; }
+.card-hand .pip { font-size: calc(var(--cw) * .62); }
+.card.back {
+  background: repeating-linear-gradient(45deg, var(--accent) 0 3px, color-mix(in srgb, var(--accent) 55%, var(--elev)) 3px 6px);
+  border: 2px solid var(--elev); box-shadow: 0 0 0 1px var(--border);
+}
+.card.tagged { box-shadow: 0 0 0 2px var(--accent), 0 2px 6px var(--shadow); }
+.card-tag {
+  position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: var(--accent); color: var(--surface);
+  font-size: 9px; font-weight: 800; letter-spacing: .04em; padding: 1px 6px; border-radius: 4px; white-space: nowrap; line-height: 1.4;
+}
+button.card { cursor: pointer; transition: transform .12s ease; }
+button.card:not(:disabled):hover, button.card:not(:disabled):focus-visible { transform: translateY(-10%); }
+button.card:disabled { cursor: default; }
+.hand.choosing button.card:disabled { opacity: .45; filter: saturate(.5); }
+
+/* top row: scores, partner, game info */
+.table-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 12px; }
+.scoreboard { display: grid; gap: 4px; justify-self: start; }
+.score { display: grid; grid-template-columns: 2.6em 1.6em auto; align-items: center; gap: 6px; font-size: .78rem; }
+.score-name { font-weight: 700; }
+.score.team-0 .score-name { color: var(--accent); }
+.score.team-1 .score-name { color: var(--cool); }
+.score-num { font-weight: 800; font-size: 1rem; font-variant-numeric: tabular-nums; }
+.pips { display: flex; flex-wrap: wrap; gap: 2px; max-width: 110px; }
+.pips i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--border); }
+.score.team-0 .pips i.on { background: var(--accent); border-color: var(--accent); }
+.score.team-1 .pips i.on { background: var(--cool); border-color: var(--cool); }
+.score-note { font-size: .68rem; color: var(--muted); }
+.game-info { justify-self: end; text-align: right; font-size: .76rem; display: grid; gap: 6px; justify-items: end; }
+.game-info dl { display: grid; gap: 2px; }
+.game-info dl div { display: flex; gap: 8px; justify-content: flex-end; }
+.game-info dt { color: var(--muted); }
+.game-info dd { font-weight: 600; }
+
+/* seats */
+.player { display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; min-width: 0; }
+.player-left, .player-right { align-self: center; }
+.player-cards { display: flex; align-items: center; gap: 10px; }
+.backs { display: flex; }
+.backs .card + .card { margin-left: calc(var(--cw) * -.34); }
+.seat-tag {
+  display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 700; padding: 3px 10px;
+  border-radius: 999px; background: var(--elev); border: 1px solid var(--border); white-space: nowrap;
+}
+.seat-tag small { font-weight: 500; color: var(--muted); }
+.seat-tag.team-0 { border-left: 3px solid var(--accent); }
+.seat-tag.team-1 { border-left: 3px solid var(--cool); }
+.seat-tag.active { box-shadow: 0 0 0 2px var(--accent); }
+.badge { font-size: .62rem; font-weight: 800; background: var(--row); border: 1px solid var(--border); padding: 0 5px; border-radius: 4px; }
+.badge.trump { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.bubble {
+  font-size: .8rem; font-weight: 700; background: var(--elev); border: 1px solid var(--border); border-radius: 10px;
+  padding: 2px 10px; box-shadow: 0 2px 6px var(--shadow);
+  position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); white-space: nowrap; z-index: 2;
+}
+
+/* middle row: west, trick, east */
+.table-middle { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; min-height: 0; }
+.player-left { justify-self: start; }
+.player-right { justify-self: end; }
+.center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; min-width: calc(var(--cw) * 4); }
+.center-label { font-size: .75rem; font-weight: 600; color: var(--muted); }
+.center-title { font-size: 1.05rem; font-weight: 700; }
+.center-detail { font-size: .85rem; }
+.center-wait { font-size: .78rem; color: var(--muted); }
+.trick { position: relative; width: calc(var(--cw) * 3.7); height: calc(var(--cw) * 2.9); }
+.trick-card { position: absolute; left: 50%; top: 50%; --x: 0px; --y: 0px; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))); }
+.trick-card.at-bottom { --y: calc(var(--cw) * .62); }
+.trick-card.at-top { --y: calc(var(--cw) * -.62); }
+.trick-card.at-left { --x: calc(var(--cw) * -1.15); }
+.trick-card.at-right { --x: calc(var(--cw) * 1.15); }
+.trick-result { font-size: .8rem; font-weight: 600; background: var(--elev); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; }
+
+/* bottom: you */
+.you { display: grid; justify-items: center; gap: 8px; }
+.you-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.prompt { font-size: .82rem; color: var(--muted); }
+.panel { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.stepper { display: inline-grid; grid-template-columns: 34px minmax(7.5em, auto) 34px; align-items: center; background: var(--elev); border: 1px solid var(--border); border-radius: 999px; }
+.stepper button { height: 34px; border: 0; background: none; color: var(--text); font-size: 1.1rem; cursor: pointer; border-radius: 999px; }
+.stepper button:disabled { color: var(--border); cursor: default; }
+.stepper output { text-align: center; font-weight: 800; font-size: .95rem; font-variant-numeric: tabular-nums; }
+.hand-row { display: flex; align-items: flex-end; gap: 18px; max-width: 100%; }
+.hand { display: flex; gap: calc(var(--cw) * .12); padding-top: 10px; }
+.indicator { display: grid; justify-items: center; gap: 2px; padding-top: 10px; }
+.indicator small { font-size: .65rem; color: var(--muted); }
+
+/* end of game */
+.result-backdrop {
+  position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 16px;
+  background: color-mix(in srgb, var(--bg) 65%, transparent); backdrop-filter: blur(2px);
+}
+.result {
+  background: var(--elev); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; max-width: 440px;
+  box-shadow: 0 20px 50px -20px var(--shadow); display: grid; gap: 12px; justify-items: start; font-size: .9rem;
+}
+.result h2 { font-size: 1.3rem; font-weight: 800; }
+.result-table { border-collapse: collapse; font-size: .82rem; width: 100%; }
+.result-table th, .result-table td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.result-table thead th { color: var(--muted); font-weight: 600; }
+
+/* narrow boxes (phones): keep everything inside by trimming detail */
+@container (max-width: 560px) {
+  .table { padding: 10px 8px; --cw: clamp(30px, min(12cqw, 9cqh), 56px); }
+  .table-top { grid-template-columns: auto 1fr; grid-template-areas: "score info" "north north"; gap: 4px 6px; }
+  .scoreboard { grid-area: score; }
+  .game-info { grid-area: info; }
+  .table-top .player-top { grid-area: north; }
+  .pips, .score-note { display: none; }
+  .score { grid-template-columns: auto auto; }
+  .game-info dl div:nth-child(-n+2) { display: none; }
+  .player-left .backs, .player-right .backs { display: none; }
+  .player-left .player-cards, .player-right .player-cards { min-height: 0; }
+  .backs .card + .card { margin-left: calc(var(--cw) * -.42); }
+  .center { min-width: 0; }
+  .trick-card.at-left { --x: calc(var(--cw) * -1.05); }
+  .trick-card.at-right { --x: calc(var(--cw) * 1.05); }
+  .hand { gap: 2px; }
+  .hand .card-hand { width: calc(var(--cw) * .98); height: calc(var(--cw) * 1.38); }
+  .hand-row { gap: 8px; }
+  .prompt { text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) { button.card { transition: none; } }
