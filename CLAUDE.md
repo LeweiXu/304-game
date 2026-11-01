@@ -9,8 +9,12 @@ This repo started as a fork of a friend's 304 project. That code is gone; only t
 ```
 frontend/     browser app: UI, rules engine, bots. Everything needed for bot games.
   public/     static assets Vite serves as-is (card art, fonts, favicon)
-backend/      multiplayer server. Empty until we do multiplayer.
+  vercel.json, .env.production   Vercel config, API base url
+backend/      multiplayer server. Just a health check until we do multiplayer.
+  304-api.service   systemd user unit installed on the homeserver
+deploy.sh     pushes backend/ to the homeserver and restarts it
 docs/rules/   the rules. Source of truth for what the engine must do.
+docs/DEPLOYMENT.md   how the hosting fits together
 design-*.html throwaway design mockups at the repo root, delete once a direction is picked
 ```
 
@@ -29,9 +33,16 @@ If code and these docs disagree, the docs win, or we change the docs on purpose 
 - Bots are deterministic given (their view, rng seed). Use a seeded RNG, never `Math.random()` inside engine or bot code.
 - Heavy bot thinking runs in a Web Worker so the table never freezes.
 
+## Hosting
+
+- Frontend: Vercel, root dir `frontend/`, at https://304.leweixu.com. Deploys on push to `main`.
+- Backend: homeserver (`homeserver` ssh alias), systemd user service `304-api` on port 8003, exposed as https://304-api.leweixu.com through the shared Cloudflare tunnel. Deploy with `./deploy.sh`. Node 18 on the server.
+- Same setup as the logarium and webnovels projects in `~/personal_projects/`. Details in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 ## Working here
 
 - Test the engine hard (rule edge cases from rules.md make good test cases). Tests prove the code runs, not that the UI looks right, so for UI changes actually open it in a browser and look.
 - Commit each finished, test-green piece of work directly on `main`. Stage specific files, never `git add -A`.
-- Don't push unless asked.
+- Pushing to `main` deploys the frontend, so only push when a change should go live (or when asked).
+- Deploying the backend (`./deploy.sh`) touches the homeserver; fine for backend changes, but say when you've done it.
 - No auto-commit hooks in this repo.

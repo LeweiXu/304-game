@@ -1,0 +1,5 @@
+# Server-only or local-only stuff that rsync --delete must not touch.
+.env
+node_modules/
+*.log
+data/

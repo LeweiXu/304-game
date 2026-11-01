@@ -1,0 +1,15 @@
+[Unit]
+Description=304 API (Node, port 8003)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/304_Project
+EnvironmentFile=-%h/304-api.env
+ExecStart=/usr/bin/node server.mjs
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target
