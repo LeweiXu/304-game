@@ -1,10 +1,10 @@
 # engine
 
-The 304 rules engine and bots. Pure TypeScript with no runtime dependencies, so it runs in the browser, in tests, and later on a server or behind an RL training loop.
+The 304 rules engine. Pure TypeScript with no runtime dependencies, so it runs in the browser, in tests, and later on a server or behind an RL training loop.
 
 ```bash
 npm install
-npm test           # vitest: rule tests, worked examples from rules.md, random playouts, bot matches
+npm test           # vitest: rule tests, worked examples from rules.md, random playouts
 npm run typecheck
 npm run bench      # speed check (bundles bench/bench.ts with rolldown, runs it on Node)
 ```
@@ -33,7 +33,8 @@ Everything goes through four functions in `src/game.ts`:
 | `game.ts` | match flow, trump choice, open/closed, scoring and stone |
 | `view.ts` | per-seat redacted view |
 | `actions.ts` | every action numbered 0..ACTION_COUNT-1 plus a legal mask, for RL |
-| `bots/naive.ts` | simple rule-based bot |
+
+The bots and the RL training environment live in `../bots`.
 
 Rule numbers in comments and tests (`§B-4`, `§T-6`) point at `docs/rules/rules.md`.
 

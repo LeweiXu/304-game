@@ -25,6 +25,9 @@
       ],
       "@engine/*": [
         "../engine/src/*"
+      ],
+      "@bots/*": [
+        "../bots/src/*"
       ]
     }
   },

@@ -31,3 +31,7 @@ Thumbs.db
 
 # Engine benchmark build output
 engine/bench/.out/
+
+# bots: built env server, Python packaging
+bots/dist/
+*.egg-info/

@@ -5,11 +5,10 @@
 // Trump: longest suit, fold its weakest card.
 // Play: win cheaply when it can, feed points to a winning partner, cut only
 // when there are points worth taking, otherwise throw the cheapest card.
-import { beats, handPoints, pointsOf, powerOf, rankOf, suitOf, type Card, type Suit } from '../cards';
-import type { Rng } from '../rng';
-import { partnerOf, teamOf } from '../seats';
-import type { Action } from '../types';
-import type { PlayerView } from '../view';
+import {
+  beats, handPoints, partnerOf, pointsOf, powerOf, rankOf, suitOf, teamOf,
+  type Action, type Card, type PlayerView, type Rng, type Suit,
+} from '../../engine/src';
 
 export function naiveBot(v: PlayerView, rng: Rng): Action {
   if (!v.legal.length) throw new Error('naiveBot called when it is not its turn');

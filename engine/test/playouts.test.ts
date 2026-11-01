@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ACTION_COUNT, apply, cloneMatch, decodeAction, step, encodeAction, handPoints, legalActions, legalMask, makeRng, mixSeed,
-  naiveBot, newMatch, nextGame, sameAction, toAct, viewFor, type Card, type MatchState,
+  ACTION_COUNT, apply, cloneMatch, decodeAction, step, encodeAction, handPoints, legalActions, legalMask, makeRng,
+  newMatch, sameAction, type Card, type MatchState,
 } from '../src';
 
 /** Every card is in exactly one place: a hand, the stock, the folded trump, or on the table. */
@@ -16,7 +16,7 @@ function allCards(m: MatchState): Card[] {
   ];
 }
 
-function checkInvariants(m: MatchState) {
+export function checkInvariants(m: MatchState) {
   const everything = allCards(m);
   expect(everything).toHaveLength(32);
   expect(new Set(everything).size).toBe(32);
@@ -46,36 +46,6 @@ describe('random legal playouts', () => {
       if (m.game.end?.kind === 'played') played++;
     }
     expect(played).toBeGreaterThan(100);
-  });
-});
-
-function botMatch(seed: number): MatchState {
-  let m = newMatch(seed);
-  for (let guard = 0; guard < 100_000 && m.winner === null; guard++) {
-    if (m.game.phase === 'over') { m = nextGame(m); continue; }
-    const seat = toAct(m.game)!;
-    const action = naiveBot(viewFor(m, seat), makeRng(mixSeed(seed, m.steps)));
-    const before = m.stone;
-    m = apply(m, action); // throws if the bot ever picks something illegal
-    checkInvariants(m);
-    expect(m.stone[0] <= before[0] && m.stone[1] <= before[1]).toBe(true); // nobody's stone goes up
-  }
-  return m;
-}
-
-describe('naive bot', () => {
-  it('plays 30 full matches to a winner', () => {
-    for (let seed = 1; seed <= 30; seed++) expect(botMatch(seed).winner).not.toBeNull();
-  });
-
-  it('bids often enough that most deals get played', () => {
-    const results = Array.from({ length: 10 }, (_, i) => botMatch(100 + i).history).flat();
-    const played = results.filter((r) => r.kind === 'played').length;
-    expect(played / results.length).toBeGreaterThan(0.6);
-  });
-
-  it('is deterministic for a given seed', () => {
-    expect(botMatch(7)).toEqual(botMatch(7));
   });
 });
 

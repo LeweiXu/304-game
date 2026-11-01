@@ -52,8 +52,10 @@ export interface PlayerView {
     leader: Seat;
     turn: Seat;
     trick: SeenCard[];
-    /** Only the most recent completed trick may be inspected. */
+    /** Only the most recent completed trick may be inspected at the table... */
     lastTrick: SeenTrick | null;
+    /** ...but players may remember everything they saw: every completed trick, as this seat saw it. */
+    tricks: SeenTrick[];
     tricksWon: [number, number];
     visiblePoints: [number, number];
   } | null;
@@ -111,6 +113,7 @@ export function viewFor(m: MatchState, seat: Seat): PlayerView {
       round: p.round, leader: p.leader, turn: p.turn,
       trick: p.trick.map((c) => see(c, seat)),
       lastTrick: tricks.at(-1) ?? null,
+      tricks,
       tricksWon, visiblePoints,
     },
     end: g.end,

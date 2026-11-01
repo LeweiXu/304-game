@@ -3,8 +3,9 @@
 // this is just pacing.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  apply, makeRng, mixSeed, naiveBot, newMatch, nextGame, toAct, viewFor, type Action, type MatchState,
+  apply, makeRng, mixSeed, newMatch, nextGame, toAct, viewFor, type Action, type MatchState,
 } from '@engine';
+import { naiveBot } from '@bots/naive';
 import { HUMAN } from './labels';
 
 const STORAGE_KEY = '304-match-v2'; // v1 saves could hold stone above 10 under the old scoring
