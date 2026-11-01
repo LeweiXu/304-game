@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>304 Rules</title>
-<!-- Design 2: Chapters. Same palette and type, set more like a book: each section is a chapter with its number, title and sub-contents pinned beside it. -->
+<!-- Quick reference, graphite: neutral greys with a single gold accent. -->
 <meta name="color-scheme" content="light dark">
 <script>
 (function(){var KEY='theme-304',r=document.documentElement;
@@ -108,79 +108,89 @@ details.example[open]>summary .chevron{transform:rotate(180deg)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 
-.mast{max-width:1180px;margin:0 auto;padding:72px 32px 56px;display:grid;grid-template-columns:300px minmax(0,1fr);gap:48px;align-items:end;border-bottom:3px double var(--border)}
-.mast .big{font-family:var(--font-body);font-weight:700;font-size:7.5rem;line-height:.8;color:var(--accent);letter-spacing:.02em}
-.mast h1{font-family:var(--font-body);font-weight:600;font-size:2.4rem;line-height:1.1;margin-bottom:.35em}
-.mast p{color:var(--muted);max-width:56ch;margin:0}
-.mast nav{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px}
-.mast nav a{font-family:var(--font-heading);font-size:.8rem;font-weight:600;color:var(--text);text-decoration:none;border:1px solid var(--border);background:var(--surface);padding:6px 12px;border-radius:999px}
-.mast nav a:hover{border-color:var(--accent);color:var(--accent)}
-.chapter{max-width:1180px;margin:0 auto;padding:64px 32px;display:grid;grid-template-columns:300px minmax(0,1fr);gap:48px;border-bottom:1px solid var(--border)}
-.ch-head{position:relative}
-.ch-sticky{position:sticky;top:calc(var(--nav-h) + 32px)}
-.ch-num{display:block;font-family:var(--font-body);font-size:4rem;line-height:1;color:var(--accent);font-weight:400;font-variant-numeric:oldstyle-nums}
-.ch-head h2{font-family:var(--font-body);font-weight:600;font-size:1.9rem;line-height:1.15;margin:6px 0 18px}
-.ch-toc{list-style:none;padding:0;margin:0;border-left:1px solid var(--border)}
-.ch-toc li{margin:0}
-.ch-toc a{display:block;font-family:var(--font-heading);font-size:.82rem;color:var(--muted);text-decoration:none;padding:5px 0 5px 14px;margin-left:-1px;border-left:2px solid transparent}
-.ch-toc a:hover{color:var(--text)}
-.ch-toc a.active{color:var(--accent);border-left-color:var(--accent);font-weight:600}
-.ch-body{max-width:700px}
-.ch-body>h3:first-child{margin-top:0}
-.ch-body h3{font-family:var(--font-body);font-weight:600;font-size:1.45rem}
-.ch-body h4{font-family:var(--font-body);font-size:1.15rem;font-style:italic;font-weight:600;color:var(--text)}
-.jump{position:relative}
-.jump summary{list-style:none;cursor:pointer;font-family:var(--font-heading);font-size:.78rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 12px;border-radius:999px}
-.jump summary::-webkit-details-marker{display:none}
-.jump[open] summary,.jump summary:hover{color:var(--text);background:var(--row)}
-.jump ol{position:absolute;right:0;top:40px;background:var(--elev);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 32px var(--shadow);padding:8px;margin:0;list-style:none;min-width:240px}
-.jump li{margin:0}
-.jump a{display:flex;gap:12px;padding:8px 10px;border-radius:6px;font-family:var(--font-body);font-size:1.05rem;color:var(--text);text-decoration:none}
-.jump a span{color:var(--accent);width:1.6em}
-.jump a:hover{background:var(--row)}
-.colophon{max-width:1180px;margin:0 auto;padding:40px 32px 80px;color:var(--muted);font-size:.95rem}
-@media (max-width:900px){
-  .mast,.chapter{grid-template-columns:minmax(0,1fr);gap:20px;padding-left:16px;padding-right:16px}
-  .mast{padding-top:40px;padding-bottom:32px}
-  .mast .big{font-size:4.5rem}
-  .chapter{padding-top:40px;padding-bottom:40px}
-  .ch-sticky{position:static}
-  .ch-toc{display:none}
-  .ch-num{font-size:2.6rem}
-  .jump summary{letter-spacing:.04em;padding:6px 8px}
+.hero{max-width:1200px;margin:0 auto;padding:56px 32px 40px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.8fr);gap:48px;align-items:center}
+.hero h1{font-family:var(--font-heading);font-weight:800;font-size:2.8rem;letter-spacing:-.02em;line-height:1.05;margin-bottom:.4em}
+.hero h1 span{display:block;color:var(--accent);font-family:var(--font-body);font-weight:700;font-size:1.3em;letter-spacing:.04em}
+.hero p{color:var(--muted)}
+.refs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.ref{position:relative;background:var(--elev);border:1px solid var(--border);border-radius:14px;padding:54px 18px 40px;box-shadow:0 1px 0 var(--border),0 10px 24px -14px var(--shadow);font-family:var(--font-heading);font-size:.8rem}
+.ref:nth-child(1){transform:rotate(-1.5deg)} .ref:nth-child(3){transform:rotate(1.5deg)}
+.ref .idx{position:absolute;top:10px;left:12px;font-weight:800;font-size:1rem;line-height:1;color:var(--text);text-align:center}
+.ref.red .idx{color:var(--red)}
+.ref .idx.flip{top:auto;left:auto;bottom:10px;right:12px;transform:rotate(180deg)}
+.ref .idx small{display:block;font-size:.9rem}
+.ref h2{font-size:.95rem;font-weight:700;margin-bottom:10px}
+.ref dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:0}
+.ref dt{font-weight:700;font-variant-numeric:tabular-nums}
+.ref dd{color:var(--muted);margin:0;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ref a{display:inline-block;margin-top:10px;font-weight:600;color:var(--accent);text-decoration:none}
+.phasebar{position:sticky;top:var(--nav-h);z-index:15;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.phasebar ol{max-width:1200px;margin:0 auto;padding:0 16px;list-style:none;display:flex;overflow-x:auto;scrollbar-width:none}
+.phasebar li{margin:0;flex:none}
+.phasebar a{display:flex;align-items:center;gap:8px;padding:14px 16px 12px;font-family:var(--font-heading);font-size:.84rem;font-weight:500;color:var(--muted);text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+.phasebar a span{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;font-size:.72rem;font-weight:700;border:1.5px solid currentColor}
+.phasebar a:hover{color:var(--text)}
+.phasebar a.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.phasebar a.active span{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.doc{max-width:1200px;margin:0 auto;padding:48px 32px 120px}
+html{scroll-padding-top:calc(var(--nav-h) + 52px + 32px)}
+.doc section+section{margin-top:64px}
+.doc h2{font-size:1.9rem;font-weight:800;letter-spacing:-.015em;margin-bottom:.6em}
+.doc h2[data-n]::before{content:"Step " attr(data-n);display:block;font-size:.78rem;font-weight:600;color:var(--accent);letter-spacing:.02em;margin-bottom:6px}
+@media (max-width:980px){
+  .hero{grid-template-columns:minmax(0,1fr);gap:28px;padding:36px 16px 28px}
+  .hero h1{font-size:2.2rem}
 }
-</style>
+@media (max-width:640px){
+  .refs{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:78%;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:6px 16px 12px;scrollbar-width:none}
+  .ref{scroll-snap-align:center}
+  .ref:nth-child(n){transform:none}
+  .phasebar ol{padding:0}
+  .doc{padding:32px 16px 80px}
+}
+:root{--bg:#f3f3f1;--surface:#fafaf9;--elev:#ffffff;--text:#1b1b1d;--muted:#64646b;--accent:#96600f;--accent-light:#f3e6cf;--cool:#3d5a80;--border:#d9d9d4;--house:#2e6b3e;--house-bg:#e8f3eb;--house-border:rgba(46,107,62,.25);--example-bg:#ebebe7;--example-border:#c9c9c2;--sidebar:#ede4cc;--link:#2f5aa8;--note-bg:#eef1f7;--head-bg:#1b1b1d;--head-fg:#fafaf9;--row:rgba(0,0,0,.03);--shadow:rgba(0,0,0,.10);--red:#b8302c;--nav:rgba(250,250,249,.92)}:root[data-theme="dark"]{--bg:#111113;--surface:#19191c;--elev:#212125;--text:#ececee;--muted:#9a9aa2;--accent:#e3aa4f;--accent-light:#3a2c14;--cool:#7d9cc6;--border:#2e2e33;--house:#6dbe7e;--house-bg:#16241a;--house-border:rgba(109,190,126,.35);--example-bg:#1c1c20;--example-border:#34343a;--sidebar:#1f140e;--link:#8ab0ec;--note-bg:#18202e;--head-bg:#212125;--head-fg:#ececee;--row:rgba(255,255,255,.04);--shadow:rgba(0,0,0,.55);--red:#f0857f;--nav:rgba(25,25,28,.92)}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111113;--surface:#19191c;--elev:#212125;--text:#ececee;--muted:#9a9aa2;--accent:#e3aa4f;--accent-light:#3a2c14;--cool:#7d9cc6;--border:#2e2e33;--house:#6dbe7e;--house-bg:#16241a;--house-border:rgba(109,190,126,.35);--example-bg:#1c1c20;--example-border:#34343a;--sidebar:#1f140e;--link:#8ab0ec;--note-bg:#18202e;--head-bg:#212125;--head-fg:#ececee;--row:rgba(255,255,255,.04);--shadow:rgba(0,0,0,.55);--red:#f0857f;--nav:rgba(25,25,28,.92)}}</style>
 </head>
 <body>
 <header class="nav"><div class="nav-inner">
   <a class="brand" href="#">304</a>
-  <nav class="nav-links" aria-label="Site"><details class="jump"><summary>Chapters</summary><ol><li><a href="#introduction"><span>01</span>Introduction</a></li><li><a href="#objective"><span>02</span>Objective</a></li><li><a href="#players-and-cards"><span>03</span>Players &amp; Cards</a></li><li><a href="#betting"><span>04</span>Betting &amp; Choosing Trump</a></li><li><a href="#scoring"><span>05</span>Scoring</a></li></ol></details>
+  <nav class="nav-links" aria-label="Site">
     <a href="#" aria-current="page">Rules</a>
     <a href="#" class="cta">Play</a>
     <button type="button" class="theme-toggle" data-state="system" aria-label="Theme"><svg class="i-system" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg><svg class="i-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="i-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
   </nav></div></header>
-<main>
-  <header class="mast">
-    <div class="big" aria-hidden="true">304</div>
-    <div><h1>House rules</h1>
-      <p>Everything you need to sit down at the table: who deals, how the betting works, and how stone changes hands. Rules marked <span class="house-rule">House Rule</span> are where our table differs from standard 304.</p>
-      <nav aria-label="Shortcuts"><a href="#scoring-table">Scoring table</a><a href="#bidding-below-200">Bidding limits</a><a href="#">Cheat sheet</a></nav>
-    </div>
-  </header>
-  <section class="chapter" id="introduction"><div class="ch-head"><div class="ch-sticky">
-<span class="ch-num" aria-hidden="true">01</span><h2>Introduction</h2></div></div><div class="ch-body">
+<header class="hero">
+  <div><h1><span>304</span>House rules</h1>
+    <p>Four players, two teams, eight tricks. The three cards on the right cover most questions mid-game; the full rules are below, in the order a game is played.</p></div>
+  <div class="refs">
+  <article class="ref"><div class="idx">J<small>♠</small></div><h2>Card order</h2>
+    <dl><dt>J</dt><dd>30</dd><dt>9</dt><dd>20</dd><dt>A</dt><dd>11</dd><dt>10</dt><dd>10</dd><dt>K</dt><dd>3</dd><dt>Q</dt><dd>2</dd><dt>8, 7</dt><dd>0</dd></dl>
+    <div class="idx flip">J<small>♠</small></div></article>
+  <article class="ref red"><div class="idx">9<small>♥</small></div><h2>Bidding ladder</h2>
+    <dl><dt>160+</dt><dd>4 cards, first turn</dd><dt>200+</dt><dd>4 cards, any turn</dd><dt>220</dt><dd>Honest, 8 cards</dd><dt>250+</dt><dd>8 cards, any turn</dd><dt>PCC</dt><dd>partner sits out</dd></dl>
+    <a href="#bidding-below-200">Bidding limits</a>
+    <div class="idx flip">9<small>♥</small></div></article>
+  <article class="ref"><div class="idx">A<small>♣</small></div><h2>Stone at stake</h2>
+    <dl><dt>Bid</dt><dd>win / lose</dd><dt>160 to 190</dt><dd>1 / 2</dd><dt>200 to 245</dt><dd>2 / 3</dd><dt>250</dt><dd>3 / 4</dd><dt>PCC</dt><dd>5 / 5</dd></dl>
+    <a href="#scoring-table">Full table</a>
+    <div class="idx flip">A<small>♣</small></div></article>
+</div>
+</header>
+<nav class="phasebar" aria-label="Rules by phase"><ol data-spy><li><a href="#introduction"><span>i</span>Basics</a></li><li><a href="#players-and-cards"><span>1</span>Players &amp; Cards</a></li><li><a href="#betting"><span>2</span>Betting &amp; Choosing Trump</a></li><li><a href="#scoring"><span>3</span>Scoring</a></li></ol></nav>
+<main class="doc"><section id="introduction">
       <p>&ldquo;304&rdquo; (pronounced &ldquo;three-nought-four&rdquo;) is a four-player partnership trick-taking card game with bidding, popular in Sri Lanka. The total point value of all cards in the pack is 304, hence the name. The game belongs to the Jass family, likely brought to Sri Lanka by Dutch traders in the 17th or 18th century. 304 is the probable ancestor of the Indian games 28 and 29.</p>
         <p>This ruleset describes the house rules as played within our group, with certain variations from the standard rules in effect. Where our rules diverge from the standard game, these are marked as <span class="house-rule">House Rule</span>. Rules have been adapted from the <a href="https://www.pagat.com/jass/304.html">Pagat website</a> and by <a href="https://www.pagat.com/docs/304rules.txt">Aings Aingaran</a>.</p>
-    </div></section><section class="chapter" id="objective"><div class="ch-head"><div class="ch-sticky">
-<span class="ch-num" aria-hidden="true">02</span><h2>Objective</h2><ul class="ch-toc" data-spy><li><a href="#units-of-play">Units of Play</a></li></ul></div></div><div class="ch-body">
+    </section>
+<section id="objective">
+      <h2>Objective</h2>
       <p>The goal is to win the <strong>match</strong>. Each team begins with 10 <strong>stone</strong> (non-playable point indicator cards, 2–6 of all suits, separated by colour). The first team to give away all their stone wins the match. Stone is given or received at the end of each game based on whether the betting team met their bid.</p>
 
       <h3 id="units-of-play">Units of Play</h3>
       <p>A <strong>round</strong> is a single trick (all four players play one card each). A <strong>game</strong> consists of 8 rounds, at the end of which a team wins or loses stone. A <strong>match</strong> is a series of games, ending when one team has given away all 10 stone. A <strong>revolution</strong> is where all combinations of players play against each other across multiple matches to determine the overall winner.</p>
       <p>A match typically lasts 30 minutes to an hour. A revolution (3 matches covering all player combinations) runs 3–4 hours.</p>
       <p id="phases">A single game flows through the same phases every time: shuffle and first deal, 4-card betting, choosing trump, second deal, 8-card betting, play, then <strong>scrutiny</strong> (counting points, verifying Caps calls, exchanging stone). The numbered sections in the contents sidebar follow this order.</p>
-    </div></section><section class="chapter" id="players-and-cards"><div class="ch-head"><div class="ch-sticky">
-<span class="ch-num" aria-hidden="true">03</span><h2>Players &amp; Cards</h2></div></div><div class="ch-body">
+    </section>
+<section id="players-and-cards">
+      <h2 data-n="1">Players &amp; Cards</h2>
       <p>There are 4 players in teams of 2. Partners sit opposite each other. Deal and play proceed <strong>anticlockwise</strong>.</p>
 
       <figure class="seating-diagram" aria-label="Seating arrangement showing partnerships, deal direction, and priority">
@@ -236,8 +246,9 @@ details.example[open]>summary .chevron{transform:rotate(180deg)}
 
       <figure class="rank-strip"><ol aria-label="Card ranks, high to low, with points"><li><span class="rk-card"><b>J</b><i>♠</i></span><span class="rk-pts">30<small> pts</small></span></li><li><span class="rk-card red"><b>9</b><i>♥</i></span><span class="rk-pts">20<small> pts</small></span></li><li><span class="rk-card"><b>A</b><i>♣</i></span><span class="rk-pts">11<small> pts</small></span></li><li><span class="rk-card red"><b>10</b><i>♦</i></span><span class="rk-pts">10<small> pts</small></span></li><li><span class="rk-card"><b>K</b><i>♠</i></span><span class="rk-pts">3<small> pts</small></span></li><li><span class="rk-card red"><b>Q</b><i>♥</i></span><span class="rk-pts">2<small> pts</small></span></li><li><span class="rk-card"><b>8</b><i>♣</i></span><span class="rk-pts">0<small> pts</small></span></li><li><span class="rk-card red"><b>7</b><i>♦</i></span><span class="rk-pts">0<small> pts</small></span></li></ol><figcaption>Same order in every suit, highest on the left.</figcaption></figure>
       <p>Note that J has precedence over 9, which has precedence over A, and so on. 8 beats 7, even though both are worth 0 points. The total across all suits is 304 (76 per suit &times; 4).</p>
-    </div></section><section class="chapter" id="betting"><div class="ch-head"><div class="ch-sticky">
-<span class="ch-num" aria-hidden="true">04</span><h2>Betting &amp; Choosing Trump</h2><ul class="ch-toc" data-spy><li><a href="#betting-4-cards">Betting on 4 Cards</a></li><li><a href="#choosing-trump">Choosing a Trump Suit</a></li><li><a href="#betting-8-cards">Betting on 8 Cards</a></li><li><a href="#pcc">Partner Closed Caps (PCC)</a></li></ul></div></div><div class="ch-body">
+    </section>
+<section id="betting">
+      <h2 data-n="2">Betting &amp; Choosing Trump</h2>
 
       <h3 id="betting-4-cards">Betting on 4 Cards</h3>
       <p>Betting begins with the player to the dealer&rsquo;s right. The minimum opening bid is <strong>160</strong> (commonly said as &ldquo;60&rdquo;: by convention, the leading &ldquo;1&rdquo; is dropped for bids below 200). Bids must increase in increments of <strong>10</strong> (below 200) or <strong>5</strong> (200 and above).</p>
@@ -382,8 +393,9 @@ details.example[open]>summary .chevron{transform:rotate(180deg)}
         <li><strong>PCC + Absolute Hand interaction.</strong> If the PCC Trumper holds an absolute hand, they may declare it (goodwill) before round 1. This triggers a <strong>pass-on</strong> with no stone exchanged, the same outcome as a non-PCC absolute hand declaration. The PCC stake is not paid out. Post-game opposition claims of absolute hand are not available in PCC (the partner is out of play and so cannot claim, and the trumping side either won and is paid the PCC stake, or lost and pays it).</li>
       </ul>
       <p class="house-rule-block"><span class="house-rule">House Rule</span> PCC rewards/punishes <strong>5 stone</strong> (win 5 / lose 5). Standard rules award 4 for a win and 5 for a loss.</p>
-    </div></section><section class="chapter" id="scoring"><div class="ch-head"><div class="ch-sticky">
-<span class="ch-num" aria-hidden="true">05</span><h2>Scoring</h2><ul class="ch-toc" data-spy><li><a href="#scoring-table">Scoring Table</a></li></ul></div></div><div class="ch-body">
+    </section>
+<section id="scoring">
+      <h2 data-n="3">Scoring</h2>
       <p>Each team begins with <strong>10 stone</strong>. The first team to give away all their stone wins the match: giving stone is <em>good</em>, receiving stone is <em>bad</em>.</p>
       <p>At the end of each game, both teams count the card points in their won rounds. The betting team must win points <strong>equal to or greater than</strong> their bid. If they succeed, they <strong>give</strong> stone to the opponents (moving closer to winning the match). If they fall short, they <strong>receive</strong> stone from the opponents (moving further from winning).</p>
       <p>Note on thresholds: The betting team&rsquo;s threshold is simply their bid (e.g. a bid of 160 requires 160+ points). The opposing team&rsquo;s threshold is 304 &minus; bid + 1 (e.g. opposing a 160 bid requires 145+ points). These are <strong>mutually exclusive</strong>: There is no possibility of a tie, since the total points in the pack is 304.</p>
@@ -423,9 +435,7 @@ details.example[open]>summary .chevron{transform:rotate(180deg)}
       </div>
       <p>The <strong>Min. Phase / Speech</strong> column gives the <em>minimum</em> phase and speech at which each bid level becomes legal: i.e. the earliest point in the auction it can first be called. Higher bids remain legal at all later positions; for the (theoretical) legality of 220+ bids on 4 cards, see <a href="#bidding-below-200">Constraints on Bidding Below 200</a>.</p>
       <p>PCC is decided solely by whether the Trumper wins all 8 rounds: Caps and External Caps modifiers do not apply.</p>
-    </div></section>
-  <p class="colophon">Adapted from Pagat and the rules by Aings Aingaran.</p>
-</main>
+    </section></main>
 <script>
 (function(){var links=[].slice.call(document.querySelectorAll('[data-spy] a[href^="#"]'));if(!links.length)return;
 var ids=[];links.forEach(function(a){var id=a.getAttribute('href').slice(1);if(ids.indexOf(id)<0&&document.getElementById(id))ids.push(id)});

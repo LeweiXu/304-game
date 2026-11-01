@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>304 Rules</title>
-<!-- Design 3: Quick reference. Same palette and type. Opens with three reference cards, then a sticky phase bar over a single reading column. -->
+<!-- Quick reference, original colours: parchment and cinnabar. -->
 <meta name="color-scheme" content="light dark">
 <script>
 (function(){var KEY='theme-304',r=document.documentElement;
@@ -125,14 +125,15 @@ details.example[open]>summary .chevron{transform:rotate(180deg)}
 .ref dd{color:var(--muted);margin:0;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .ref a{display:inline-block;margin-top:10px;font-weight:600;color:var(--accent);text-decoration:none}
 .phasebar{position:sticky;top:var(--nav-h);z-index:15;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-.phasebar ol{max-width:1160px;margin:0 auto;padding:0 32px;list-style:none;display:flex;overflow-x:auto;scrollbar-width:none}
+.phasebar ol{max-width:1200px;margin:0 auto;padding:0 16px;list-style:none;display:flex;overflow-x:auto;scrollbar-width:none}
 .phasebar li{margin:0;flex:none}
 .phasebar a{display:flex;align-items:center;gap:8px;padding:14px 16px 12px;font-family:var(--font-heading);font-size:.84rem;font-weight:500;color:var(--muted);text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
 .phasebar a span{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;font-size:.72rem;font-weight:700;border:1.5px solid currentColor}
 .phasebar a:hover{color:var(--text)}
 .phasebar a.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
 .phasebar a.active span{background:var(--accent);color:var(--surface);border-color:var(--accent)}
-.doc{max-width:740px;margin:0 auto;padding:48px 24px 120px}
+.doc{max-width:1200px;margin:0 auto;padding:48px 32px 120px}
+html{scroll-padding-top:calc(var(--nav-h) + 52px + 32px)}
 .doc section+section{margin-top:64px}
 .doc h2{font-size:1.9rem;font-weight:800;letter-spacing:-.015em;margin-bottom:.6em}
 .doc h2[data-n]::before{content:"Step " attr(data-n);display:block;font-size:.78rem;font-weight:600;color:var(--accent);letter-spacing:.02em;margin-bottom:6px}
@@ -144,7 +145,7 @@ details.example[open]>summary .chevron{transform:rotate(180deg)}
   .refs{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:78%;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:6px 16px 12px;scrollbar-width:none}
   .ref{scroll-snap-align:center}
   .ref:nth-child(n){transform:none}
-  .phasebar ol{padding:0 8px}
+  .phasebar ol{padding:0}
   .doc{padding:32px 16px 80px}
 }
 </style>
