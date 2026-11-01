@@ -20,7 +20,7 @@ function checkInvariants(m: MatchState) {
   const everything = allCards(m);
   expect(everything).toHaveLength(32);
   expect(new Set(everything).size).toBe(32);
-  expect(m.stone[0] + m.stone[1]).toBe(20);
+  for (const n of m.stone) expect(n >= 0 && n <= 10).toBe(true); // stone only ever goes down
   const g = m.game;
   if (g.phase === 'play') {
     // Every seat holds the same number of cards, give or take the one played this trick.
@@ -55,8 +55,10 @@ function botMatch(seed: number): MatchState {
     if (m.game.phase === 'over') { m = nextGame(m); continue; }
     const seat = toAct(m.game)!;
     const action = naiveBot(viewFor(m, seat), makeRng(mixSeed(seed, m.steps)));
+    const before = m.stone;
     m = apply(m, action); // throws if the bot ever picks something illegal
     checkInvariants(m);
+    expect(m.stone[0] <= before[0] && m.stone[1] <= before[1]).toBe(true); // nobody's stone goes up
   }
   return m;
 }

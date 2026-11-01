@@ -92,7 +92,7 @@ export type GameEnd =
       bidTeam: Team;
       points: [number, number];
       made: boolean;
-      /** Team that gave stone, and how much actually moved. */
+      /** The team that won the game and gave away stone, and how much. */
       giver: Team;
       stone: number;
     }

@@ -122,21 +122,22 @@ describe('scoring', () => {
     return playAll(m, 'Jc', '7c', '8c', 'Qc'); // seat 0 wins 32 points
   }
 
-  it('making the bid: the bidding team gives stone', () => {
+  it('making the bid: the bidding team gives away stone, the opponents keep theirs', () => {
     const m = lastTrick([130, 142], 160, [10, 10]);
     expect(m.game.end).toMatchObject({ kind: 'played', made: true, giver: 0, stone: 1 });
-    expect(m.stone).toEqual([9, 11]);
+    expect(m.stone).toEqual([9, 10]);
   });
 
-  it('failing the bid: the bidding team receives stone from the opponents', () => {
+  it('failing the bid: the opponents give away the loss amount, nobody gains stone', () => {
     const m = lastTrick([120, 152], 200, [10, 10]);
     expect(m.game.end).toMatchObject({ made: false, giver: 1, stone: 3 });
-    expect(m.stone).toEqual([13, 7]);
+    expect(m.stone).toEqual([10, 7]);
   });
 
-  it('giving away your last stone wins the match', () => {
-    const m = lastTrick([220, 52], 250, [2, 18]);
-    expect(m.stone).toEqual([0, 20]);
+  it('you cannot give away more than you have, and reaching zero wins the match', () => {
+    const m = lastTrick([220, 52], 250, [2, 6]);
+    expect(m.game.end).toMatchObject({ made: true, giver: 0, stone: 2 });
+    expect(m.stone).toEqual([0, 6]);
     expect(m.winner).toBe(0);
     expect(() => nextGame(m)).toThrow();
   });

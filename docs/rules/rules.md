@@ -437,11 +437,13 @@ Each team begins with **10 stone**. The first team to give away all their stone 
 
 At the end of each game, both teams count the card points in their won rounds. The betting team must win points **equal to or greater than** their bid. If they succeed, they **give** stone to the opponents (moving closer to winning the match). If they fall short, they **receive** stone from the opponents (moving further from winning).
 
+**What "give" and "receive" mean.** Stone only ever leaves a pile; no team's stone count ever goes up. Whichever team wins the game removes stone from its own pile: when the betting team makes its bid, it gives away the "Win" amount below; when it falls short, the opponents give away the "Loss" amount instead. "Team X receives N stone" always means "X's opponents give away N stone". A team can't give away more stone than it has left; reaching zero wins the match.
+
 Note on thresholds: The betting team's threshold is simply their bid (e.g. a bid of 160 requires 160+ points). The opposing team's threshold is 304 − bid + 1 (e.g. opposing a 160 bid requires 145+ points). These are **mutually exclusive** — there is no possibility of a tie, since the total points in the pack is 304.
 
 ### Scoring Table
 
-| Bet | Common Name | Win (stone given) | Loss (stone received) | Opposition Threshold | Min. Phase / Speech |
+| Bet | Common Name | Win (stone the betting team gives away) | Loss (stone the opponents give away) | Opposition Threshold | Min. Phase / Speech |
 |-----|-------------|-------------------|----------------------|---------------------|---------------------|
 | 160 | "60" | 1 | 2 | 145 | 4-card, first speech |
 | 170 | "70" | 1 | 2 | 135 | 4-card, first speech |

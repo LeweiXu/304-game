@@ -40,5 +40,5 @@ Caps (calling, late, wrong, external), PCC, absolute hand, Spoilt Trumps calls a
 
 ## Two rules calls worth knowing
 
-- Stone moves between teams: making a bid gives stone to the opponents, failing it takes stone from them. A team can't give more than it has.
+- Stone only ever goes down. Whoever wins the game gives away stone from their own pile: the bidders on a made bid, the opponents on a failed one. A team can't give away more than it has. (rules.md spells this out under Scoring.)
 - In 8-card betting, only an 8-card bid counts as the "current bid" for the holder skip (§B-2), so the 4-card trumper can still speak on 8 cards.

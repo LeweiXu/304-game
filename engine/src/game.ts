@@ -209,12 +209,12 @@ function score(m: MatchState) {
   const points = g.play!.points;
   const made = points[bidTeam] >= bid.value;
   const [win, loss] = stoneAtStake(bid.value);
-  // Making the bid: the bidding team gives stone to the opponents.
-  // Failing: the bidding team receives stone from them. Nobody can give more than they have.
+  // Whoever wins the game gives away stone from their own pile; nobody's pile ever grows.
+  // Bid made: the bidding team gives away the win amount. Bid failed: the opponents give
+  // away the loss amount (rules.md calls that the bidding team "receiving" stone).
   const giver: Team = made ? bidTeam : otherTeam(bidTeam);
   const moved = Math.min(made ? win : loss, m.stone[giver]);
   m.stone[giver] -= moved;
-  m.stone[otherTeam(giver)] += moved;
   finish(m, { kind: 'played', bid, bidTeam, points: [points[0], points[1]], made, giver, stone: moved });
   if (m.stone[giver] === 0) m.winner = giver;
 }
