@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { apply, makeRng, mixSeed, newMatch, nextGame, toAct, viewFor, type MatchState } from '../../engine/src';
+import { apply, makeRng, mixSeed, newMatch, nextGame, toAct, viewFor, type MatchState, type RuleOptions } from '../../engine/src';
 import { naiveBot } from '../src/naive';
 
-function botMatch(seed: number): MatchState {
-  let m = newMatch(seed);
+function botMatch(seed: number, rules: Partial<RuleOptions> = { caps: false }): MatchState {
+  let m = newMatch(seed, { rules });
   for (let guard = 0; guard < 100_000 && m.winner === null; guard++) {
     if (m.game.phase === 'over') { m = nextGame(m); continue; }
     const seat = toAct(m.game)!;
@@ -23,6 +23,15 @@ describe('naive bot', () => {
     const results = Array.from({ length: 10 }, (_, i) => botMatch(100 + i).history).flat();
     expect(results.filter((r) => r.kind === 'played').length / results.length).toBeGreaterThan(0.6);
   });
+
+  it('plays matches with caps and claim balance on, and never gets caught out by them', () => {
+    for (let seed = 1; seed <= 4; seed++) {
+      const m = botMatch(seed, { caps: true, claimBalance: true });
+      expect(m.winner).not.toBeNull();
+      // It calls as soon as the solver is sure, so no late caps and no missed claims.
+      expect(m.history.some((e) => e.kind === 'caps' && e.result !== 'correct')).toBe(false);
+    }
+  }, 120_000);
 
   it('is deterministic for a given seed', () => {
     expect(botMatch(7)).toEqual(botMatch(7));

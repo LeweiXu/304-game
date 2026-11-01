@@ -17,9 +17,9 @@ export type Phase = 'bid4' | 'trump4' | 'bid8' | 'trump8' | 'declare' | 'show' |
 export interface RuleOptions {
   /** 'random': full shuffle every deal. 'slap': the last game's cards, 1-3 slap shuffles and a cut. */
   shuffle: 'random' | 'slap';
-  /** Caps rules. Stored, but caps itself isn't implemented yet. */
+  /** Caps rules: calling a sweep with a declared order, late / early / wrong caps, external caps. */
   caps: boolean;
-  /** Claim balance. Stored, but not implemented yet. */
+  /** Claim balance: once your team is sure to win every remaining round you must claim it, or pay 1 stone. */
   claimBalance: boolean;
   /** Players may claim the game once their team has reached its points threshold. */
   claimThreshold: boolean;
@@ -41,7 +41,8 @@ export type Action =
   | { type: 'declare'; open: boolean }
   | { type: 'show'; card: Card } // open trump: show this trump card to the table
   | { type: 'absolute' } // goodwill declaration of an absolute hand before round 1: pass-on
-  | { type: 'spoilt' } // call Spoilt Trumps
+  | { type: 'caps'; order?: Card[] } // call caps, declaring the order of all my remaining cards (omitted: the engine picks one)
+  | { type: 'balance' } // claim the balance: my team wins every remaining round
   | { type: 'claim' } // claim the game: my team has reached its points threshold
   | { type: 'play'; card: Card };
 
@@ -140,11 +141,24 @@ export type GameEnd =
   | { kind: 'redeal'; seat: Seat }
   /** Absolute hand: declared in goodwill before round 1, or claimed by the opposition after losing every round. */
   | { kind: 'absolute'; seat: Seat; how: 'goodwill' | 'claim' }
-  /** A correct Spoilt Trumps call voids the game. */
-  | { kind: 'spoilt'; seat: Seat };
+  /** Spoilt Trumps: the trumping team's opponents were dealt no trump. Detected automatically; the same dealer redeals. */
+  | { kind: 'spoilt' }
+  /** Caps, judged. seat is null for a sweep nobody called (late caps). */
+  | {
+      kind: 'caps';
+      seat: Seat | null;
+      team: Team;
+      result: 'correct' | 'late' | 'early' | 'wrong';
+      order: Card[] | null;
+      round: number;
+      bid: HighBid;
+      bidTeam: Team;
+      giver: Team;
+      stone: number;
+    };
 
 /** A penalty handed out during a game, settled when it ends: the offender's opponents give away stone. */
-export interface Penalty { seat: Seat; reason: 'falseSpoilt'; stone: number }
+export interface Penalty { seat: Seat; reason: 'balanceWrong' | 'balanceLate' | 'balanceMissed'; stone: number }
 
 export interface GameState {
   number: number;
@@ -166,8 +180,14 @@ export interface GameState {
   pccOut: Seat | null;
   /** Everyone's 8 cards as play began (the trumper's include the folded card). Used to settle Spoilt Trumps and absolute hands. */
   dealt: Card[][] | null;
-  /** Seats that have called Spoilt Trumps this game (one call each). */
-  spoiltCalled: boolean[];
+  /** Per seat: the play turn (cards played so far) of their first caps opportunity, if the engine found one. Hidden. */
+  capsFirst: (number | null)[];
+  /** Per seat: the play turn of their first claim-balance opportunity. Hidden. */
+  balanceFirst: (number | null)[];
+  /** Seats that made a wrong claim-balance call this game (one call each). */
+  balanceCalled: boolean[];
+  /** The team that claimed the balance successfully, if any. */
+  balanceClaimed: Team | null;
   penalties: Penalty[];
   end: GameEnd | null;
 }

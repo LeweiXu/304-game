@@ -57,7 +57,7 @@ const BLOCKS: [name: string, size: number, meaning: string][] = [
   ['hidden_counts', 4, 'per relative seat: face-down cards they played that I never saw, divided by 8'],
   ['tricks_won', 2, 'tricks won by my team / the other team, divided by 8'],
   ['points', 2, 'points I can see each team has won, divided by 304'],
-  ['spoilt_called', 4, 'per relative seat: has called Spoilt Trumps this game'],
+  ['balance_called', 4, 'per relative seat: has made a (wrong) claim-balance call this game'],
   ['penalties', 2, 'penalty stone pending against my team / the other team this game, divided by 4'],
 ];
 
@@ -175,7 +175,7 @@ export function encodeView(view: PlayerView, out?: Float32Array, base = 0): Floa
     o[at('points')] = p.visiblePoints[myTeam] / 304;
     o[at('points') + 1] = p.visiblePoints[1 - myTeam] / 304;
   }
-  for (let s = 0; s < 4; s++) if (view.spoiltCalled[s]) o[at('spoilt_called') + rel(s as Seat)] = 1;
+  for (let s = 0; s < 4; s++) if (view.balanceCalled[s]) o[at('balance_called') + rel(s as Seat)] = 1;
   for (const pen of view.penalties) o[at('penalties') + (pen.seat % 2 === myTeam ? 0 : 1)] += pen.stone / 4;
   return o;
 }

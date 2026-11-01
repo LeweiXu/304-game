@@ -1,13 +1,20 @@
 // The public face of the engine: start a match, ask whose turn it is and what
 // they may do, apply an action, deal the next game. Everything is pure: apply()
 // returns a new MatchState and never touches the one passed in.
-import { suitOf, type Card, type Suit } from './cards';
+import { handPoints, powerOf, sortHand, suitOf, type Card, type Suit } from './cards';
+import { findGuaranteedOrder, orderGuarantees } from './caps';
 import { applySpeech, legalBiddingActions, newBidding } from './bidding';
 import { applyPlay, newPlay, playOptions, pointsSeenBy, trickSize } from './play';
 import { makeRng } from './rng';
 import { buildDeck, gatherPile } from './shuffle';
 import { nextSeat, otherTeam, partnerOf, teamOf, type Seat, type Team } from './seats';
 import { DEFAULT_RULES, PCC, type Action, type GameEnd, type GameState, type MatchState, type RuleOptions } from './types';
+import { viewFor } from './view';
+
+/** Node budgets for the caps solver: small when checking every turn for a missed chance, big when judging a call.
+ * Bots should search with TRACK_BUDGET too, so they never miss a chance the engine would hold against them. */
+export const TRACK_BUDGET = 50_000;
+const JUDGE_BUDGET = 2_000_000;
 
 export const START_STONE = 10;
 
@@ -25,14 +32,32 @@ export function thresholdFor(bid: number, isBidTeam: boolean): number {
 }
 
 /**
- * An absolute hand is guaranteed to win all 8 rounds whatever the deal, however
- * the others play, and whoever leads. That only holds for all eight trumps: with
- * any non-trump card, some deal lets an opponent lead that suit (or lets you be
- * forced to lead it) while another opponent, void in it, cuts with an outstanding
- * trump. Only the trumper can hold all eight trumps (one of them is the folded card).
+ * An absolute hand wins all 8 rounds before play begins, whatever the deal and
+ * however the others play. Two shapes qualify (rules.md, Absolute Hand):
+ *
+ * 1. All eight trumps. Wins whoever leads.
+ * 2. With priority (you lead round 1): leading trumps from the top draws every
+ *    outstanding trump, and everything left is a winner. With o trumps out, the
+ *    worst case is one opponent holding all o, so your first o trumps must each
+ *    beat every outstanding trump: you hold the top o trumps. Then each other
+ *    suit you hold must be its top cards in sequence (J, 9, A, ...), so nothing
+ *    left out there can beat them once trumps are gone.
  */
-export function isAbsoluteHand(cards: readonly Card[], trump: Suit): boolean {
-  return cards.length === 8 && cards.every((c) => suitOf(c) === trump);
+export function isAbsoluteHand(cards: readonly Card[], trump: Suit, hasPriority: boolean): boolean {
+  if (cards.length !== 8) return false;
+  const trumps = cards.filter((c) => suitOf(c) === trump);
+  if (trumps.length === 8) return true;
+  if (!hasPriority) return false;
+  const out = 8 - trumps.length;
+  const held = new Set(trumps.map(powerOf));
+  for (let pw = 0; pw < out; pw++) if (!held.has(pw)) return false; // need the top `out` trumps
+  const bySuit = new Map<Suit, number[]>();
+  for (const c of cards) if (suitOf(c) !== trump) bySuit.set(suitOf(c), [...(bySuit.get(suitOf(c)) ?? []), powerOf(c)]);
+  for (const powers of bySuit.values()) {
+    const sorted = [...powers].sort((a, b) => a - b);
+    if (sorted.some((pw, i) => pw !== i)) return false; // must be J, 9, A, ... with no gap
+  }
+  return true;
 }
 
 function deal(m: Pick<MatchState, 'rng' | 'rules' | 'pile'>, number: number, dealer: Seat, riffle: boolean): { game: GameState; rng: number } {
@@ -58,7 +83,10 @@ function deal(m: Pick<MatchState, 'rng' | 'rules' | 'pile'>, number: number, dea
       play: null,
       pccOut: null,
       dealt: null,
-      spoiltCalled: [false, false, false, false],
+      capsFirst: [null, null, null, null],
+      balanceFirst: [null, null, null, null],
+      balanceCalled: [false, false, false, false],
+      balanceClaimed: null,
       penalties: [],
       end: null,
     },
@@ -91,8 +119,9 @@ export function withRules(m: MatchState, rules: Partial<RuleOptions>): MatchStat
 /** Deals the next game once the current one is over and nobody has won the match. */
 export function nextGame(m: MatchState): MatchState {
   if (m.game.phase !== 'over' || m.winner !== null) throw new Error('The current game is still going, or the match is over.');
-  // A redeal keeps the same dealer; everything else moves the deal one seat anticlockwise.
-  const dealer = m.game.end?.kind === 'redeal' ? m.game.dealer : nextSeat(m.game.dealer);
+  // A redeal (asked for, or Spoilt Trumps) keeps the same dealer; everything else moves the deal on.
+  const kind = m.game.end?.kind;
+  const dealer = kind === 'redeal' || kind === 'spoilt' ? m.game.dealer : nextSeat(m.game.dealer);
   // Riffle remedy: three redeals in a row from the same seat.
   const riffle = (m.redealStreak?.count ?? 0) >= 3;
   const { game, rng } = deal(m, m.game.number + 1, dealer, riffle);
@@ -122,6 +151,17 @@ function trumperCards(g: GameState): Card[] {
   return t.indicator ? [...g.hands[t.seat], t.indicator] : [...g.hands[t.seat]];
 }
 
+/** The trumper leads round 1: they have priority, or it's PCC. */
+const trumperLeads = (g: GameState) => g.trump!.seat === nextSeat(g.dealer) || isPcc(g);
+
+/** Has `team` won every round played so far? */
+function sweptSoFar(g: GameState, team: Team): boolean {
+  return (g.play?.tricks ?? []).every((tr) => teamOf(tr.winner) === team);
+}
+
+/** Cards played so far this game: identifies a play turn. */
+const turnId = (g: GameState) => (g.play ? g.play.tricks.length * trickSize(g) + g.play.trick.length : 0);
+
 /** Everything the player to move may do right now. Empty when the game is over. */
 export function legalActions(g: GameState): Action[] {
   switch (g.phase) {
@@ -131,22 +171,25 @@ export function legalActions(g: GameState): Action[] {
     case 'trump8': return g.hands[toAct(g)!].map((card) => ({ type: 'trump', card }));
     case 'declare': {
       const out: Action[] = [{ type: 'declare', open: false }, { type: 'declare', open: true }];
-      if (isAbsoluteHand(trumperCards(g), g.trump!.suit)) out.push({ type: 'absolute' });
+      if (isAbsoluteHand(trumperCards(g), g.trump!.suit, trumperLeads(g))) out.push({ type: 'absolute' });
       return out;
     }
     case 'show': {
       const t = g.trump!;
       const out: Action[] = g.hands[t.seat].filter((c) => suitOf(c) === t.suit).map((card) => ({ type: 'show', card }));
-      if (isAbsoluteHand(trumperCards(g), t.suit)) out.push({ type: 'absolute' });
+      if (isAbsoluteHand(trumperCards(g), t.suit, trumperLeads(g))) out.push({ type: 'absolute' });
       return out;
     }
     case 'play': {
       const out: Action[] = playOptions(g).map((o) => ({ type: 'play', card: o.card }));
-      const p = g.play!;
-      const seat = p.turn;
-      // Spoilt Trumps: anyone, once per game, any time before the last card of round 8.
-      const lastCard = p.round === 8 && p.trick.length === trickSize(g) - 1;
-      if (!g.spoiltCalled[seat] && !lastCard) out.push({ type: 'spoilt' });
+      const seat = g.play!.turn;
+      if (!isPcc(g)) {
+        const swept = sweptSoFar(g, teamOf(seat));
+        // Caps can be called on your own turn while your team has won every round so far.
+        if (g.rules.caps && swept) out.push({ type: 'caps' });
+        // Claim balance covers the rest (once caps can't apply), one call per seat.
+        if (g.rules.claimBalance && !(g.rules.caps && swept) && !g.balanceCalled[seat]) out.push({ type: 'balance' });
+      }
       if (g.rules.claimThreshold && canClaimThreshold(g, seat)) out.push({ type: 'claim' });
       return out;
     }
@@ -175,7 +218,19 @@ export function sameAction(a: Action, b: Action): boolean {
 }
 
 export function isLegal(g: GameState, a: Action): boolean {
-  return legalActions(g).some((l) => sameAction(l, a));
+  if (!legalActions(g).some((l) => sameAction(l, a))) return false;
+  if (a.type === 'caps' && a.order) {
+    // A declared order has to list exactly the caller's remaining cards.
+    const mine = remainingCards(g, g.play!.turn);
+    return a.order.length === mine.length && mine.every((c) => a.order!.includes(c));
+  }
+  return true;
+}
+
+/** A seat's unplayed cards, including the folded trump if it's theirs and still on the table. */
+function remainingCards(g: GameState, seat: Seat): Card[] {
+  const t = g.trump;
+  return t && t.seat === seat && t.indicator ? [...g.hands[seat], t.indicator] : [...g.hands[seat]];
 }
 
 /** Applies the action for whoever is to move. Throws on an illegal action. Never changes `m`. */
@@ -220,17 +275,124 @@ export function step(m: MatchState, action: Action): MatchState {
     case 'absolute':
       finish(m, { kind: 'absolute', seat: g.trump!.seat, how: 'goodwill' });
       break;
-    case 'spoilt':
-      callSpoilt(m);
+    case 'caps':
+      judgeCaps(m, action.order ?? null);
+      break;
+    case 'balance':
+      judgeBalance(m);
       break;
     case 'claim':
       score(m, g.play!.turn);
       break;
     case 'play':
-      if (applyPlay(g, action.card)) score(m, null);
+      if (applyPlay(g, action.card) || decided(g)) score(m, null);
       break;
   }
+  // Spoilt Trumps ends the game inside beginPlay, which has no MatchState: record it here.
+  if (g.phase === 'over' && g.end && m.history.at(-1) !== g.end) finish(m, g.end);
+  if (g.phase === 'play') trackOpportunities(m);
   return m;
+}
+
+/**
+ * The result can't change any more: one team has reached its points threshold
+ * and caps no longer matters (caps off, or both teams have won a round). Not
+ * with the claim-threshold option, where players have to claim it themselves.
+ */
+function decided(g: GameState): boolean {
+  if (g.rules.claimThreshold || isPcc(g)) return false;
+  const p = g.play!;
+  const bid = contract(g)!;
+  const bidTeam = teamOf(bid.seat);
+  const reached = p.points[bidTeam] >= bid.value || p.points[otherTeam(bidTeam)] >= thresholdFor(bid.value, false);
+  if (!reached) return false;
+  if (!g.rules.caps) return true;
+  const won = [false, false];
+  for (const tr of p.tricks) won[teamOf(tr.winner)] = true;
+  return won[0] && won[1];
+}
+
+/**
+ * At the start of each play turn, note whether the player to act could call caps
+ * (or claim the balance) now. That's how late caps and missed claims are judged
+ * later. The solver only sees that player's view.
+ */
+function trackOpportunities(m: MatchState) {
+  const g = m.game;
+  if (isPcc(g)) return;
+  const seat = g.play!.turn;
+  const team = teamOf(seat);
+  const swept = sweptSoFar(g, team);
+  const capsChance = g.rules.caps && swept && g.capsFirst[seat] === null;
+  const balanceChance = g.rules.claimBalance && !(g.rules.caps && swept) && g.balanceFirst[seat] === null;
+  if (!capsChance && !balanceChance) return;
+  const found = findGuaranteedOrder(viewFor(m, seat), TRACK_BUDGET);
+  if (!Array.isArray(found)) return; // none, or couldn't tell in budget: no penalty on a maybe
+  if (capsChance) g.capsFirst[seat] = turnId(g);
+  if (balanceChance) g.balanceFirst[seat] = turnId(g);
+}
+
+/** Caps outcomes in stone (rules.md, Caps): [giving team, amount]. */
+function capsStone(g: GameState, team: Team, result: 'correct' | 'late' | 'early' | 'wrong', beforeRound7: boolean): [Team, number] {
+  const bid = contract(g)!;
+  const bidTeam = teamOf(bid.seat);
+  const [win, loss] = stoneAtStake(bid.value);
+  if (result === 'early' || result === 'wrong') return [otherTeam(team), 5]; // the caller's team "receives" 5
+  const bonus = result === 'correct' && beforeRound7 ? 1 : 0;
+  if (team === bidTeam) {
+    return result === 'correct' ? [bidTeam, win + bonus] : [otherTeam(bidTeam), loss + 1];
+  }
+  // External caps (the opposition): correct = the betting team loses (+1 early); late = the betting team wins + 1.
+  return result === 'correct' ? [team, loss + bonus] : [bidTeam, win + 1];
+}
+
+function endWithCaps(m: MatchState, seat: Seat | null, team: Team, result: 'correct' | 'late' | 'early' | 'wrong', order: Card[] | null) {
+  const g = m.game;
+  const bid = contract(g)!;
+  const round = g.play!.round;
+  const [giver, amount] = capsStone(g, team, result, round <= 6);
+  const moved = Math.min(amount, m.stone[giver]);
+  m.stone[giver] -= moved;
+  finish(m, { kind: 'caps', seat, team, result, order, round, bid, bidTeam: teamOf(bid.seat), giver, stone: moved });
+}
+
+/** A caps call: judge the declared order (or find one if none was given). */
+function judgeCaps(m: MatchState, declared: Card[] | null) {
+  const g = m.game;
+  const seat = g.play!.turn;
+  const team = teamOf(seat);
+  const view = viewFor(m, seat);
+  const found = findGuaranteedOrder(view, JUDGE_BUDGET);
+  const order = declared ?? (Array.isArray(found) ? found : sortHand(remainingCards(g, seat)));
+  const sure = declared ? orderGuarantees(view, declared, JUDGE_BUDGET) : found !== null;
+  if (sure === false) {
+    // No order works at all: early. Some order works but not the one declared: wrong.
+    return endWithCaps(m, seat, team, found === null ? 'early' : 'wrong', order);
+  }
+  // Guaranteed (or too big to refute: benefit of the doubt). Late if this player had an earlier chance.
+  const first = g.capsFirst[seat];
+  endWithCaps(m, seat, team, first !== null && first < turnId(g) ? 'late' : 'correct', order);
+}
+
+/** A claim-balance call. Right: the claimer's team takes every remaining card. Wrong: 1 stone, play goes on. */
+function judgeBalance(m: MatchState) {
+  const g = m.game;
+  const seat = g.play!.turn;
+  const team = teamOf(seat);
+  const found = findGuaranteedOrder(viewFor(m, seat), JUDGE_BUDGET);
+  if (found === null) {
+    g.balanceCalled[seat] = true;
+    g.penalties.push({ seat, reason: 'balanceWrong', stone: 1 });
+    return;
+  }
+  const firsts = [0, 1, 2, 3].filter((s) => teamOf(s as Seat) === team).map((s) => g.balanceFirst[s]).filter((x): x is number => x !== null);
+  if (firsts.length && Math.min(...firsts) < turnId(g)) g.penalties.push({ seat, reason: 'balanceLate', stone: 1 });
+  // The rest of the rounds go to the claiming team.
+  const p = g.play!;
+  const rest = [...g.hands.filter((_, s) => s !== g.pccOut).flat(), ...(g.trump?.indicator ? [g.trump.indicator] : []), ...p.trick.map((c) => c.card)];
+  p.points[team] += handPoints(rest);
+  g.balanceClaimed = team;
+  score(m, null);
 }
 
 /** Deep copy of the parts step() may change. Plain data, so this is all it takes. */
@@ -254,7 +416,9 @@ export function cloneMatch(m: MatchState): MatchState {
         tricks: [...g.play.tricks], // finished tricks are never modified
         points: [g.play.points[0], g.play.points[1]],
       },
-      spoiltCalled: [...g.spoiltCalled],
+      capsFirst: [...g.capsFirst],
+      balanceFirst: [...g.balanceFirst],
+      balanceCalled: [...g.balanceCalled],
       penalties: [...g.penalties],
       // rules, dealt, pile and redealStreak are replaced, never mutated, so sharing them is safe.
     },
@@ -341,22 +505,14 @@ function beginPlay(g: GameState) {
   g.dealt = g.hands.map((h, s) => (s === t.seat && t.indicator ? [...h, t.indicator] : [...h]));
   g.play = newPlay(g);
   g.phase = 'play';
-}
-
-/**
- * Spoilt Trumps: right if the trumping team's opponents held no trump at all
- * in the cards they were dealt. A right call voids the game; a wrong one costs
- * the caller's team 1 stone (their opponents give one away) and play goes on.
- */
-function callSpoilt(m: MatchState) {
-  const g = m.game;
-  const t = g.trump!;
-  const seat = g.play!.turn;
-  g.spoiltCalled[seat] = true;
+  // Spoilt Trumps: the trumping team's opponents were dealt no trump at all. Checked
+  // automatically once trump is final; the cards are thrown in and the same dealer redeals.
   const trumpTeam = teamOf(t.seat);
   const spoilt = [0, 1, 2, 3].every((s) => teamOf(s as Seat) === trumpTeam || !g.dealt![s].some((c) => suitOf(c) === t.suit));
-  if (spoilt) finish(m, { kind: 'spoilt', seat });
-  else g.penalties.push({ seat, reason: 'falseSpoilt', stone: 1 });
+  if (spoilt) {
+    g.phase = 'over';
+    g.end = { kind: 'spoilt' };
+  }
 }
 
 function score(m: MatchState, claimedBy: Seat | null) {
@@ -369,8 +525,16 @@ function score(m: MatchState, claimedBy: Seat | null) {
   for (const tr of p.tricks) tricks[teamOf(tr.winner)] += 1;
 
   // The opposition lost every round: if the trumper's hand was absolute, they claim it and the game becomes a pass-on.
-  if (!pcc && tricks[bidTeam] === 8 && isAbsoluteHand(g.dealt![g.trump!.seat], g.trump!.suit)) {
+  if (!pcc && tricks[bidTeam] === 8 && isAbsoluteHand(g.dealt![g.trump!.seat], g.trump!.suit, trumperLeads(g))) {
     return finish(m, { kind: 'absolute', seat: g.trump!.seat, how: 'claim' });
+  }
+  // A sweep nobody called, though someone on that team had a caps chance: late caps.
+  if (!pcc && g.rules.caps && claimedBy === null && g.balanceClaimed === null) {
+    for (const team of [0, 1] as Team[]) {
+      if (tricks[team] !== 8) continue;
+      const missed = [0, 1, 2, 3].some((s) => teamOf(s as Seat) === team && g.capsFirst[s] !== null);
+      if (missed) return endWithCaps(m, null, team, 'late', null);
+    }
   }
 
   let made: boolean;
@@ -396,6 +560,14 @@ function finish(m: MatchState, end: GameEnd) {
   g.phase = 'over';
   g.end = end;
   m.history.push(end);
+  // Claim balance: a team that had a chance to claim and never did pays 1 stone.
+  if (g.rules.claimBalance && g.play) {
+    for (const team of [0, 1] as Team[]) {
+      if (g.balanceClaimed === team) continue;
+      const seat = ([0, 1, 2, 3] as Seat[]).find((s) => teamOf(s) === team && g.balanceFirst[s] !== null);
+      if (seat !== undefined) g.penalties.push({ seat, reason: 'balanceMissed', stone: 1 });
+    }
+  }
   // Penalties are settled at the end of the game: the offender's opponents give away stone.
   for (const pen of g.penalties) {
     const giver = otherTeam(teamOf(pen.seat));

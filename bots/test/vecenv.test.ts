@@ -16,7 +16,7 @@ function randomActions(env: VecEnv, rng: ReturnType<typeof makeRng>): Int32Array
 
 describe('VecEnv', () => {
   it('self-play: every slot always waits on a legal decision, rewards are zero-sum and only at done', () => {
-    const env = new VecEnv({ numEnvs: 16, seed: 1, checkLegal: true });
+    const env = new VecEnv({ numEnvs: 16, seed: 1, checkLegal: true, rules: { caps: false } });
     env.reset();
     const rng = makeRng(2);
     let dones = 0;
@@ -36,7 +36,7 @@ describe('VecEnv', () => {
   });
 
   it('only ever asks the agent seats when the rest are bots', () => {
-    const env = new VecEnv({ numEnvs: 8, seed: 3, agentSeats: [0, 2], opponent: 'naive', checkLegal: true });
+    const env = new VecEnv({ numEnvs: 8, seed: 3, agentSeats: [0, 2], opponent: 'naive', checkLegal: true, rules: { caps: false } });
     env.reset();
     const rng = makeRng(4);
     for (let t = 0; t < 1000; t++) {
@@ -57,7 +57,7 @@ describe('VecEnv', () => {
 
   it('is deterministic for a seed', () => {
     const run = () => {
-      const env = new VecEnv({ numEnvs: 4, seed: 9, agentSeats: [0], opponent: 'naive' });
+      const env = new VecEnv({ numEnvs: 4, seed: 9, agentSeats: [0], opponent: 'naive', rules: { caps: false } });
       env.reset();
       const rng = makeRng(5);
       for (let t = 0; t < 300; t++) env.step(randomActions(env, rng));

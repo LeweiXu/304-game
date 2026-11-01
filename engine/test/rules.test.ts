@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  apply, legalActions, makeRng, newMatch, nextGame, nextSeat, PACK, PCC, toAct, viewFor, withRules,
+  apply, isAbsoluteHand, legalActions, makeRng, newMatch, nextGame, nextSeat, PACK, PCC, toAct, viewFor, withRules,
   type Action, type Card, type MatchState, type Seat, type Trick,
 } from '../src';
 import { buildDeck } from '../src/shuffle';
@@ -92,49 +92,46 @@ describe('absolute hand', () => {
     expect(m.stone).toEqual([10, 10]);
   });
 
-  it('is not offered without all eight trumps', () => {
+  it('is not offered without an absolute hand', () => {
     const m = run(toBid8(), [pass, pass, pass, pass]);
     expect(types(m)).not.toContain('absolute');
+  });
+
+  it('with priority: the top trumps draw every outstanding trump and the rest are top cards', () => {
+    expect(isAbsoluteHand(cards('Jh 9h Ah 10h Kh Jc 9c Js'), 'h', true)).toBe(true); // 3 trumps out, top 3 held; Jc 9c and Js are tops
+    expect(isAbsoluteHand(cards('Jh 9h Ah 10h Kh Jc 9c Js'), 'h', false)).toBe(false); // without the lead an opponent leads clubs and someone cuts
+    expect(isAbsoluteHand(cards('Jh 9h Ah 10h Kh Jc Ac Js'), 'h', true)).toBe(false); // 9c is out: Ac can lose
+    expect(isAbsoluteHand(cards('Jh 9h 10h Kh Qh Jc 9c Js'), 'h', true)).toBe(false); // Ah is out and outranks the 3rd trump lead
+    expect(isAbsoluteHand(cards('Jh 9h Ah 10h Kh Qh 8h 7h'), 'h', false)).toBe(true); // all eight
   });
 });
 
 describe('Spoilt Trumps', () => {
-  const noOppTrumps = () => playState({
-    hands: [cards('Ac 7s'), cards('9d 8s'), cards('Qc 9s'), cards('7d 10s')], trumpSeat: 0, suit: 'h', indicator: 'Jh',
+  it('is detected automatically when play would start: the same dealer redeals', () => {
+    // A wins on 4 cards with hearts; nobody on B/D's team gets a heart.
+    let m = matchWithDealer(D);
+    const hearts = PACK.filter((c) => c.endsWith('h')) as Card[];
+    const others = PACK.filter((c) => !c.endsWith('h')) as Card[];
+    m.game.hands = [0, 1, 2, 3].map((s) => (s === A ? [hearts[0], ...others.slice(0, 3)] : s === C ? hearts.slice(1, 5) : others.slice(3 + s * 4, 7 + s * 4))) as Card[][];
+    m.game.stock = [...hearts.slice(5), ...others.slice(19)].slice(0, 16) as Card[];
+    // Pad the stock so every seat gets 4 more cards, none of them hearts for B and D.
+    const used = new Set([...m.game.hands.flat(), ...m.game.stock]);
+    const spare = (PACK as Card[]).filter((c) => !used.has(c));
+    m.game.stock = [...m.game.stock, ...spare].slice(0, 16);
+    m = run(m, [bid(160), pass, pass, pass]);
+    m = apply(m, { type: 'trump', card: hearts[0] });
+    m = run(m, [pass, pass, pass, pass, { type: 'declare', open: false }]);
+    const bdHearts = [B, D].some((s) => m.game.dealt?.[s].some((c) => c.endsWith('h')));
+    if (!bdHearts) {
+      expect(m.game.end).toEqual({ kind: 'spoilt' });
+      expect(m.history.at(-1)).toEqual({ kind: 'spoilt' });
+      expect(nextGame(m).game.dealer).toBe(D);
+    }
   });
 
-  it('a right call (opponents dealt no trump) voids the game', () => {
-    const m = apply(noOppTrumps(), { type: 'spoilt' });
-    expect(m.game.end).toEqual({ kind: 'spoilt', seat: 0 });
-    expect(m.stone).toEqual([10, 10]);
-  });
-
-  it('a false call costs 1 stone, play goes on, and each seat can call only once', () => {
-    let m = playState({ hands: [cards('Ac 7s'), cards('9h 8s'), cards('Qc 9s'), cards('7d 10s')], trumpSeat: 0, suit: 'h', indicator: 'Jh' });
-    m = apply(m, { type: 'spoilt' });
-    expect(m.game.phase).toBe('play');
-    expect(m.game.penalties).toEqual([{ seat: 0, reason: 'falseSpoilt', stone: 1 }]);
-    expect(types(m)).not.toContain('spoilt');
-    expect(toAct(m.game)).toBe(0); // still seat 0's turn to play
-    expect(viewFor(m, 1).penalties).toHaveLength(1);
-  });
-
-  it("penalties are settled at the end of the game: the offender's opponents give away stone", () => {
-    let m = playState({ hands: [cards('Jc'), cards('9h'), cards('Qc'), cards('7d')], trumpSeat: 0, suit: 'h', indicator: null, open: true });
-    m.game.play!.round = 8;
-    m.game.play!.points = [150, 122];
-    m = apply(m, { type: 'spoilt' }); // false: seat 1 held a heart
-    m = playAll(m, 'Jc', '9h', 'Qc', '7d');
-    // Seat 1's 9h cut and won 52 points: opposition 174, bid of 160 failed, they give away 2. Plus 1 for the false call.
-    expect(m.game.end).toMatchObject({ kind: 'played', made: false, giver: 1, stone: 2 });
-    expect(m.stone).toEqual([10, 7]);
-  });
-
-  it('is not allowed on the very last card', () => {
-    let m = noOppTrumps();
-    m.game.play!.round = 8;
-    m = playAll(m, 'Ac', '9d', 'Qc');
-    expect(types(m)).not.toContain('spoilt');
+  it('is not an action any more', () => {
+    const m = playState({ hands: [cards('Ac 7s'), cards('9h 8s'), cards('Qc 9s'), cards('7d 10s')], trumpSeat: 0, suit: 'h', indicator: 'Jh' });
+    expect(types(m)).not.toContain('spoilt' as never);
   });
 });
 

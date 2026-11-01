@@ -5,17 +5,17 @@
 //   15      pcc
 //   16-19   pass, partner, redeal, passOn
 //   20-21   declare closed, declare open
-//   22-24   absolute, spoilt, claim
-//   25-56   trump <card>   (PACK order)
-//   57-88   show <card>
-//   89-120  play <card>
+//   22-25   absolute, caps, balance, claim   (caps carries no order here: the engine picks one)
+//   26-57   trump <card>   (PACK order)
+//   58-89   show <card>
+//   90-121  play <card>
 import { PACK, type Card } from './cards';
 import { BID_VALUES } from './bidding';
 import { legalActions } from './game';
 import type { Action, GameState } from './types';
 
 const SIMPLE = ['pass', 'partner', 'redeal', 'passOn'] as const;
-const CALLS = ['absolute', 'spoilt', 'claim'] as const;
+const CALLS = ['absolute', 'caps', 'balance', 'claim'] as const;
 const BID_BASE = 0;
 const PCC_ID = BID_BASE + BID_VALUES.length;
 const SIMPLE_BASE = PCC_ID + 1;
@@ -40,7 +40,8 @@ export function encodeAction(a: Action): number {
     case 'passOn': return SIMPLE_BASE + SIMPLE.indexOf(a.type);
     case 'declare': return DECLARE_BASE + (a.open ? 1 : 0);
     case 'absolute':
-    case 'spoilt':
+    case 'caps':
+    case 'balance':
     case 'claim': return CALL_BASE + CALLS.indexOf(a.type);
     case 'trump': return TRUMP_BASE + CARD_INDEX[a.card];
     case 'show': return SHOW_BASE + CARD_INDEX[a.card];

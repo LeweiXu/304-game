@@ -10,11 +10,11 @@ function time(label: string, fn: () => number, unit: string) {
 }
 
 /** Play `games` games with uniformly random legal moves. Returns steps taken. */
-function randomGames(games: number): number {
+function randomGames(games: number, caps = false): number {
   const rng = makeRng(1);
   let steps = 0;
   for (let i = 0; i < games; i++) {
-    let m = newMatch(i + 1);
+    let m = newMatch(i + 1, { rules: { caps } });
     while (m.game.phase !== 'over') {
       const legal = legalActions(m.game);
       m = apply(m, legal[rng.int(legal.length)]);
@@ -29,7 +29,7 @@ function randomGamesFast(games: number): number {
   const rng = makeRng(1);
   let steps = 0;
   for (let i = 0; i < games; i++) {
-    const m = newMatch(i + 1);
+    const m = newMatch(i + 1, { rules: { caps: false } });
     while (m.game.phase !== 'over') {
       const legal = legalActions(m.game);
       step(m, legal[rng.int(legal.length)]);
@@ -44,7 +44,7 @@ const states: MatchState[] = [];
 {
   const rng = makeRng(9);
   for (let i = 0; states.length < 2000; i++) {
-    let m = newMatch(i + 1);
+    let m = newMatch(i + 1, { rules: { caps: false } });
     while (m.game.phase !== 'over') {
       if (m.game.phase === 'play' && rng.int(4) === 0) states.push(m);
       const legal = legalActions(m.game);
@@ -57,7 +57,8 @@ const each = (fn: (m: MatchState) => void) => () => { for (let r = 0; r < REPS; 
 
 const stepsPerGame = randomGames(2000) / 2000;
 console.log(`avg actions per game (random play): ${stepsPerGame.toFixed(1)}\n`);
-time('random legal moves: actions', () => randomGames(5000), 'actions');
+time('random legal moves, caps off: actions', () => randomGames(5000), 'actions');
+time('random legal moves, caps on (solver runs): actions', () => randomGames(1000, true), 'actions');
 time('random legal moves, step in place: actions', () => randomGamesFast(5000), 'actions');
 console.log('');
 time('legalActions (play phase)', each((m) => { legalActions(m.game); }), 'calls');

@@ -118,8 +118,8 @@ export interface PlayerView {
     unseenFaceDown: number[];
   } | null;
 
-  /** Spoilt Trumps calls so far this game, per seat (a call is public). */
-  spoiltCalled: boolean[];
+  /** Per seat: made a wrong claim-balance call this game (a call is public). */
+  balanceCalled: boolean[];
   /** Penalties handed out this game, settled when it ends. */
   penalties: Penalty[];
   /** How the game ended (full points included), once phase is 'over'. */
@@ -208,7 +208,7 @@ export function viewFor(m: MatchState, seat: Seat): PlayerView {
       lastTrick: tricks.at(-1) ?? null,
       tricks, tricksWon, visiblePoints, unseenFaceDown,
     },
-    spoiltCalled: [...g.spoiltCalled],
+    balanceCalled: [...g.balanceCalled],
     penalties: [...g.penalties],
     end: g.end,
   };

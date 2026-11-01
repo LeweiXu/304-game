@@ -2,12 +2,13 @@
 // one of view.legal, so it can't cheat or make an illegal move.
 //
 // Bidding: open with a decent 4-card hand, rarely compete, almost never bid on 8, never PCC.
-// Calls: takes an absolute hand, claims the threshold when it can, never calls Spoilt Trumps.
+// Calls: takes an absolute hand, claims the threshold when it can, and calls caps / claims
+// the balance as soon as the solver says it's sure (so it never gets caught for a late call).
 // Trump: longest suit, fold its weakest card.
 // Play: win cheaply when it can, feed points to a winning partner, cut only
 // when there are points worth taking, otherwise throw the cheapest card.
 import {
-  beats, handPoints, partnerOf, pointsOf, powerOf, rankOf, suitOf, teamOf,
+  beats, CAPS_TRACK_BUDGET, findGuaranteedOrder, handPoints, partnerOf, pointsOf, powerOf, rankOf, suitOf, teamOf,
   type Action, type Card, type PlayerView, type Rng, type Suit,
 } from '../../engine/src';
 
@@ -25,7 +26,14 @@ export function naiveBot(v: PlayerView, rng: Rng): Action {
       const shows = v.legal.flatMap((a) => (a.type === 'show' ? [a.card] : []));
       return { type: 'show', card: weakest(shows) };
     }
-    case 'play': return has(v, 'claim') ? { type: 'claim' } : { type: 'play', card: chooseCard(v) };
+    case 'play': {
+      if (has(v, 'claim')) return { type: 'claim' };
+      if (has(v, 'caps') || has(v, 'balance')) {
+        const order = findGuaranteedOrder(v, CAPS_TRACK_BUDGET);
+        if (Array.isArray(order)) return has(v, 'caps') ? { type: 'caps', order } : { type: 'balance' };
+      }
+      return { type: 'play', card: chooseCard(v) };
+    }
     default: return v.legal[0];
   }
 }
