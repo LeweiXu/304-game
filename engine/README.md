@@ -1,0 +1,44 @@
+# engine
+
+The 304 rules engine and bots. Pure TypeScript with no runtime dependencies, so it runs in the browser, in tests, and later on a server or behind an RL training loop.
+
+```bash
+npm install
+npm test           # vitest: rule tests, worked examples from rules.md, random playouts, bot matches
+npm run typecheck
+```
+
+## How it works
+
+Everything goes through four functions in `src/game.ts`:
+
+- `newMatch(seed)` deals the first game.
+- `toAct(game)` says whose decision it is.
+- `legalActions(game)` lists what they may do. This is the only authority on legality; the UI and bots only ever pick from it.
+- `apply(match, action)` returns a new match state. It never mutates its input and throws on an illegal action.
+
+`nextGame(match)` deals the next game once one is over. `viewFor(match, seat)` is what a seat is allowed to know: its own hand, public plays, and the trump suit only if it's the trumper or trump is open. Bots get a view, never the full state.
+
+| File | What |
+|---|---|
+| `cards.ts` | cards as strings (`'Jc'`, `'10h'`), points, which card beats which |
+| `seats.ts` | seats 0-3 anticlockwise, partners opposite, team = seat % 2 |
+| `rng.ts` | seeded RNG whose state lives in the match, so the engine stays pure |
+| `types.ts` | the state, actions and game outcomes |
+| `bidding.ts` | 4- and 8-card betting (§B rules), redeal, pass-on |
+| `play.ts` | tricks, closed-trump face-down rules (§T rules), folded cards, exhausted trumps |
+| `game.ts` | match flow, trump choice, open/closed, scoring and stone |
+| `view.ts` | per-seat redacted view |
+| `actions.ts` | every action numbered 0..ACTION_COUNT-1 plus a legal mask, for RL |
+| `bots/naive.ts` | simple rule-based bot |
+
+Rule numbers in comments and tests (`§B-4`, `§T-6`) point at `docs/rules/rules.md`.
+
+## Not implemented yet
+
+Caps (calling, late, wrong, external), PCC, absolute hand, Spoilt Trumps calls and penalties. Without caps every game plays all 8 rounds.
+
+## Two rules calls worth knowing
+
+- Stone moves between teams: making a bid gives stone to the opponents, failing it takes stone from them. A team can't give more than it has.
+- In 8-card betting, only an 8-card bid counts as the "current bid" for the holder skip (§B-2), so the 4-card trumper can still speak on 8 cards.
