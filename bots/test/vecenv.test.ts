@@ -46,6 +46,15 @@ describe('VecEnv', () => {
     expect(env.stats.botSteps).toBeGreaterThan(0);
   });
 
+  it('runs with house-rule options switched on', () => {
+    const env = new VecEnv({ numEnvs: 8, seed: 11, checkLegal: true, rules: { shuffle: 'slap', claimThreshold: true } });
+    env.reset();
+    const rng = makeRng(12);
+    for (let t = 0; t < 1500; t++) env.step(randomActions(env, rng));
+    expect(env.views().every((v) => v.rules.shuffle === 'slap' && v.rules.claimThreshold)).toBe(true);
+    expect(env.stats.games).toBeGreaterThan(20);
+  });
+
   it('is deterministic for a seed', () => {
     const run = () => {
       const env = new VecEnv({ numEnvs: 4, seed: 9, agentSeats: [0], opponent: 'naive' });

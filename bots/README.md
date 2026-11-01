@@ -43,8 +43,9 @@ while True:
 
 - One episode is one game (deal to scoring). Slots auto-reset: when `done[i]` is set, `obs[i]` is already the first decision of the next game.
 - `agent_seats=[0, 2]` with `opponent="naive"` trains one team against the naive bot; the default `[0, 1, 2, 3]` is self-play. `opponent="random"` plays uniformly random legal moves.
-- Rewards are stone given away, zero-sum per game: the team that gave away k stone gets +k on both seats, the other team -k. Pass-ons and redeals give 0.
+- Rewards are stone given away, zero-sum per game: the team that gave away k stone gets +k on both seats, the other team -k. A false Spoilt Trumps call adds -1 / +1. Pass-ons, redeals, absolute hands and correct Spoilt Trumps calls give 0.
 - `check_legal=True` makes the server reject illegal actions instead of trusting the mask.
+- `rules={...}` sets house-rule options for every match, e.g. `{"shuffle": "slap", "claimThreshold": True}`.
 - The observation layout (block names, offsets, meanings) comes back as `env.layout`.
 - `env.views()` returns the full structured view (everything the seat to act can see or remember) as dicts. Slower; for debugging or trying other encodings.
 

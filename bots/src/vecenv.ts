@@ -12,11 +12,13 @@
 //   done[i]    1 if a game ended during this step (obs then belongs to the next game)
 //
 // Rewards are zero-sum: when a game is played out, the team that gave away
-// stone gets +stone for both its seats and the other team gets -stone.
-// Pass-ons and redeals give 0. Nothing in between: reward only arrives at done.
+// stone gets +stone for both its seats and the other team gets -stone. A
+// penalty (false Spoilt Trumps call) adds -stone to the offender's team and
+// +stone to the other. Pass-ons and redeals give 0. Reward only arrives at done.
+// (Stone a team can't give away because its pile is empty still counts here.)
 import {
   ACTION_COUNT, decodeAction, isLegal, legalActions, legalMask, makeRng, mixSeed, newMatch, nextGame, step, teamOf, toAct, viewFor,
-  type MatchState, type PlayerView, type Seat,
+  type MatchState, type PlayerView, type RuleOptions, type Seat,
 } from '../../engine/src';
 import { encodeView, OBS_SIZE } from './encode';
 import { naiveBot } from './naive';
@@ -32,6 +34,8 @@ export interface VecEnvConfig {
   opponent?: Opponent;
   /** Throw if an action isn't legal. Costs a little; handy while developing. */
   checkLegal?: boolean;
+  /** House-rule options for every match (shuffle mode, claim threshold, ...). */
+  rules?: Partial<RuleOptions>;
 }
 
 export class VecEnv {
@@ -48,6 +52,7 @@ export class VecEnv {
   private readonly opponent: Opponent;
   private readonly checkLegal: boolean;
   private readonly seed: number;
+  private readonly rules: Partial<RuleOptions>;
   private matches: MatchState[] = [];
   private matchCounter = 0;
 
@@ -59,6 +64,7 @@ export class VecEnv {
     this.agent = [0, 1, 2, 3].map((s) => seats.includes(s as Seat));
     this.opponent = cfg.opponent ?? 'naive';
     this.checkLegal = cfg.checkLegal ?? false;
+    this.rules = cfg.rules ?? {};
     this.obs = new Float32Array(this.numEnvs * OBS_SIZE);
     this.mask = new Uint8Array(this.numEnvs * ACTION_COUNT);
     this.seat = new Int8Array(this.numEnvs);
@@ -126,6 +132,10 @@ export class VecEnv {
       this.stats.played++;
       for (let s = 0; s < 4; s++) this.reward[i * 4 + s] += teamOf(s as Seat) === end.giver ? end.stone : -end.stone;
     }
+    // Penalties: the offender's opponents give away stone, which is good for them and bad for the offender.
+    for (const pen of m.game.penalties) {
+      for (let s = 0; s < 4; s++) this.reward[i * 4 + s] += teamOf(s as Seat) === teamOf(pen.seat) ? -pen.stone : pen.stone;
+    }
     if (m.winner !== null) this.stats.matches++;
   }
 
@@ -137,7 +147,7 @@ export class VecEnv {
   }
 
   private freshMatch(): MatchState {
-    return newMatch(mixSeed(this.seed, ++this.matchCounter));
+    return newMatch(mixSeed(this.seed, ++this.matchCounter), { rules: this.rules });
   }
 
   private write(i: number) {

@@ -4,13 +4,31 @@ import type { Seat, Team } from './seats';
 /**
  * bid4     betting on the first 4 cards
  * trump4   the 4-card winner places a trump card face down
- * bid8     betting after the second deal
+ * bid8     betting after the second deal (skipped after a PCC bid on 4 cards)
  * trump8   an 8-card bid superseded the 4-card one: the new trumper picks again
- * declare  the trumper chooses open or closed trump
+ * declare  the trumper chooses open or closed trump (skipped for PCC, which is always open)
+ * show     open trump without priority, or PCC: the trumper shows one trump card to the table
  * play     8 rounds of tricks
- * over     the game ended (played out, pass-on or redeal); see GameState.end
+ * over     the game ended; see GameState.end
  */
-export type Phase = 'bid4' | 'trump4' | 'bid8' | 'trump8' | 'declare' | 'play' | 'over';
+export type Phase = 'bid4' | 'trump4' | 'bid8' | 'trump8' | 'declare' | 'show' | 'play' | 'over';
+
+/** House-rule switches, chosen per match. Each game copies them when it's dealt. */
+export interface RuleOptions {
+  /** 'random': full shuffle every deal. 'slap': the last game's cards, 1-3 slap shuffles and a cut. */
+  shuffle: 'random' | 'slap';
+  /** Caps rules. Stored, but caps itself isn't implemented yet. */
+  caps: boolean;
+  /** Claim balance. Stored, but not implemented yet. */
+  claimBalance: boolean;
+  /** Players may claim the game once their team has reached its points threshold. */
+  claimThreshold: boolean;
+}
+
+export const DEFAULT_RULES: RuleOptions = { shuffle: 'random', caps: true, claimBalance: false, claimThreshold: false };
+
+/** The PCC (Partner Closed Caps) bid, stored as a bid value above every numeric bid. */
+export const PCC = 999;
 
 export type Action =
   | { type: 'bid'; value: number }
@@ -19,16 +37,22 @@ export type Action =
   | { type: 'redeal' } // 4 cards under 15 points
   | { type: 'passOn' } // 8 cards under 25 points, first 8-card speech
   | { type: 'trump'; card: Card }
+  | { type: 'pcc' } // Partner Closed Caps: the highest bid
   | { type: 'declare'; open: boolean }
+  | { type: 'show'; card: Card } // open trump: show this trump card to the table
+  | { type: 'absolute' } // goodwill declaration of an absolute hand before round 1: pass-on
+  | { type: 'spoilt' } // call Spoilt Trumps
+  | { type: 'claim' } // claim the game: my team has reached its points threshold
   | { type: 'play'; card: Card };
 
+/** value is PCC (999) for a PCC bid. */
 export interface HighBid { seat: Seat; value: number }
 
 export interface Speech {
   stage: 4 | 8; // which betting round
   seat: Seat; // who spoke
   action: 'bid' | 'pass' | 'partner';
-  value?: number;
+  value?: number; // PCC (999) for a PCC bid
   inSeat?: Seat; // set when speaking in a partner's seat after "partner"
 }
 
@@ -59,8 +83,10 @@ export interface TrumpState {
   open: boolean;
   /** Trump was declared open before play (rather than revealed by a cut). */
   declaredOpen: boolean;
-  /** Everyone has seen which card was folded: it was flipped on a reveal, shown on an open declaration, or played face up. */
+  /** Everyone has seen which card was folded: it was flipped on a cut reveal or played face up. */
   foldedPublic: boolean;
+  /** The trump card shown to the table on an open declaration (or for PCC). */
+  shown: Card | null;
   /** Open trump declared by a trumper with priority: round 1 must be led with trump. */
   mustLeadTrump: boolean;
 }
@@ -102,13 +128,28 @@ export type GameEnd =
       /** The team that won the game and gave away stone, and how much. */
       giver: Team;
       stone: number;
+      /** PCC game: decided by tricks (all 8 to the trumper), not points. */
+      pcc: boolean;
+      /** Set when the game ended early because this seat claimed its team's threshold. */
+      claimedBy: Seat | null;
+      /** Tricks won per team (fewer than 8 in total if the game ended early). */
+      tricks: [number, number];
     }
   | { kind: 'passOn'; reason: 'noBids' }
   | { kind: 'passOn'; reason: 'lowPoints8'; seat: Seat }
-  | { kind: 'redeal'; seat: Seat };
+  | { kind: 'redeal'; seat: Seat }
+  /** Absolute hand: declared in goodwill before round 1, or claimed by the opposition after losing every round. */
+  | { kind: 'absolute'; seat: Seat; how: 'goodwill' | 'claim' }
+  /** A correct Spoilt Trumps call voids the game. */
+  | { kind: 'spoilt'; seat: Seat };
+
+/** A penalty handed out during a game, settled when it ends: the offender's opponents give away stone. */
+export interface Penalty { seat: Seat; reason: 'falseSpoilt'; stone: number }
 
 export interface GameState {
   number: number;
+  /** Rule options in force for this game. */
+  rules: RuleOptions;
   dealer: Seat;
   phase: Phase;
   hands: Card[][];
@@ -121,6 +162,13 @@ export interface GameState {
   bid8: HighBid | null;
   trump: TrumpState | null;
   play: PlayState | null;
+  /** PCC: the trumper's partner, who sits the game out. */
+  pccOut: Seat | null;
+  /** Everyone's 8 cards as play began (the trumper's include the folded card). Used to settle Spoilt Trumps and absolute hands. */
+  dealt: Card[][] | null;
+  /** Seats that have called Spoilt Trumps this game (one call each). */
+  spoiltCalled: boolean[];
+  penalties: Penalty[];
   end: GameEnd | null;
 }
 
@@ -136,4 +184,10 @@ export interface MatchState {
   winner: Team | null;
   /** Number of actions applied so far (handy for deriving bot seeds). */
   steps: number;
+  /** Rule options for upcoming games (change with withRules). */
+  rules: RuleOptions;
+  /** The physical order of the 32 cards after the last game, top first. Slap shuffling starts from it. */
+  pile: Card[] | null;
+  /** Consecutive 4-card redeals called from the same seat (three in a row earns a riffle shuffle). */
+  redealStreak: { seat: Seat; count: number } | null;
 }

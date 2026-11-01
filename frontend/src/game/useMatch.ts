@@ -3,12 +3,12 @@
 // this is just pacing.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  apply, makeRng, mixSeed, newMatch, nextGame, toAct, viewFor, type Action, type MatchState,
+  apply, makeRng, mixSeed, newMatch, nextGame, toAct, viewFor, withRules, type Action, type MatchState, type RuleOptions,
 } from '@engine';
 import { naiveBot } from '@bots/naive';
 import { HUMAN } from './labels';
 
-const STORAGE_KEY = '304-match-v2'; // v1 saves could hold stone above 10 under the old scoring
+const STORAGE_KEY = '304-match-v3'; // bump when MatchState changes shape (v3: rules, PCC, penalties)
 const BOT_DELAY = { bid: 700, choose: 600, play: 650 };
 
 function load(): MatchState | null {
@@ -31,12 +31,18 @@ function save(m: MatchState | null) {
 
 const trickCount = (m: MatchState) => m.game.play?.tricks.length ?? 0;
 
-export function useMatch() {
+export function useMatch(rules: RuleOptions) {
   const [match, setMatch] = useState<MatchState | null>(load);
   // True while a just-finished trick stays on the table, until you click Continue.
   const [pausing, setPausing] = useState(false);
 
   useEffect(() => save(match), [match]);
+
+  // Settings changes go into the match and apply from the next deal.
+  const rulesKey = JSON.stringify(rules);
+  useEffect(() => {
+    setMatch((m) => (m && JSON.stringify(m.rules) !== rulesKey ? withRules(m, JSON.parse(rulesKey) as RuleOptions) : m));
+  }, [rulesKey]);
 
   const view = useMemo(() => (match ? viewFor(match, HUMAN) : null), [match]);
 
@@ -66,8 +72,8 @@ export function useMatch() {
 
   const start = useCallback(() => {
     setPausing(false);
-    setMatch(newMatch((Math.random() * 2 ** 32) >>> 0)); // the only non-seeded randomness: picking a seed
-  }, []);
+    setMatch(newMatch((Math.random() * 2 ** 32) >>> 0, { rules })); // the only non-seeded randomness: picking a seed
+  }, [rules]);
 
   const deal = useCallback(() => { if (match) setMatch(nextGame(match)); }, [match]);
   const quit = useCallback(() => { setPausing(false); setMatch(null); }, []);

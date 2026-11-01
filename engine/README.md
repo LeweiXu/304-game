@@ -28,9 +28,10 @@ Everything goes through four functions in `src/game.ts`:
 | `seats.ts` | seats 0-3 anticlockwise, partners opposite, team = seat % 2 |
 | `rng.ts` | seeded RNG whose state lives in the match, so the engine stays pure |
 | `types.ts` | the state, actions and game outcomes |
-| `bidding.ts` | 4- and 8-card betting (§B rules), redeal, pass-on |
-| `play.ts` | tricks, closed-trump face-down rules (§T rules), folded cards, exhausted trumps |
-| `game.ts` | match flow, trump choice, open/closed, scoring and stone |
+| `bidding.ts` | 4- and 8-card betting (§B rules), PCC, redeal, pass-on |
+| `play.ts` | tricks, closed-trump face-down rules (§T rules), folded cards, exhausted trumps, PCC's 3-player tricks |
+| `game.ts` | match flow, trump choice, open/closed and showing a trump, absolute hand, Spoilt Trumps, claims, scoring and stone |
+| `shuffle.ts` | building each deal's deck: full shuffle, or slap shuffles + cut + riffle remedy |
 | `view.ts` | per-seat redacted view |
 | `actions.ts` | every action numbered 0..ACTION_COUNT-1 plus a legal mask, for RL |
 
@@ -40,9 +41,8 @@ Rule numbers in comments and tests (`§B-4`, `§T-6`) point at `public/rules.md`
 
 ## Not implemented yet
 
-Caps (calling, late, wrong, external), PCC, absolute hand, Spoilt Trumps calls and penalties. Without caps every game plays all 8 rounds.
+Caps (calling with a declared order, late / early / wrong / external) and the optional Claim Balance rule. Everything else in `public/rules.md` is in, including PCC, absolute hand, Spoilt Trumps (with the false-call penalty), choosing which trump card to show on open trump, light slap-shuffling, and the optional claim-threshold rule. House-rule options are `RuleOptions` on the match (`newMatch(seed, { rules })`, `withRules`).
 
-## Two rules calls worth knowing
+## Rules calls worth knowing
 
-- Stone only ever goes down. Whoever wins the game gives away stone from their own pile: the bidders on a made bid, the opponents on a failed one. A team can't give away more than it has. (rules.md spells this out under Scoring.)
-- In 8-card betting, only an 8-card bid counts as the "current bid" for the holder skip (§B-2), so the 4-card trumper can still speak on 8 cards.
+The full list is in `public/304-project-overview.md` ("Interpretation calls"). The big ones: stone only ever goes down (the winning team gives away stone from its own pile); an absolute hand means all eight trumps; a PCC game ends as soon as the opponents win a round; a false Spoilt Trumps call costs 1 stone, settled when the game ends.

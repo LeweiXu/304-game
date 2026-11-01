@@ -68,6 +68,7 @@ class VecEnv:
         agent_seats: Sequence[int] = (0, 1, 2, 3),
         opponent: str = "naive",
         check_legal: bool = False,
+        rules: dict | None = None,
         node: str = "node",
         server: str | Path | None = None,
     ):
@@ -87,6 +88,7 @@ class VecEnv:
             "agentSeats": list(agent_seats),
             "opponent": opponent,
             "checkLegal": check_legal,
+            "rules": rules or {},
         }
         info = json.loads(self._call(_INIT, json.dumps(cfg).encode()))
         self.num_envs: int = info["numEnvs"]

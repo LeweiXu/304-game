@@ -2,11 +2,11 @@
 // Functions here work on a draft GameState that game.ts has already copied.
 import { handPoints } from './cards';
 import { nextSeat, partnerOf, type Seat } from './seats';
-import type { Action, Bidding, GameState, Speech } from './types';
+import { PCC, type Action, type Bidding, type GameState, type Speech } from './types';
 
 export const MIN_BID_4 = 160;
 export const MIN_BID_8 = 220; // "Honest" (house rule)
-export const MAX_BID = 250; // only PCC goes higher, and PCC isn't implemented yet
+export const MAX_BID = 250; // the only bid above this is PCC
 const FIRST_SPEECH_LIMIT = { 4: 200, 8: 250 } as const;
 const REDEAL_UNDER = 15;
 const PASS_ON_8_UNDER = 25;
@@ -32,6 +32,7 @@ export function newBidding(stage: 4 | 8, dealer: Seat): Bidding {
 /** Legal bid values for whoever is speaking now. */
 export function legalBidValues(g: GameState): number[] {
   const b = g.bidding;
+  if (b.high?.value === PCC) return []; // nothing outranks PCC
   const s = b.speaker;
   const firstSpeech = !b.spoken[s];
   const partnerHolds = b.high !== null && b.high.seat === partnerOf(s);
@@ -48,6 +49,8 @@ export function legalBiddingActions(g: GameState): Action[] {
   const b = g.bidding;
   const s = b.speaker;
   const out: Action[] = legalBidValues(g).map((value) => ({ type: 'bid', value }));
+  // PCC is legal on any speech in either round (rules.md: in practice only ever bid on 8 cards).
+  if (b.high?.value !== PCC) out.push({ type: 'pcc' });
   out.push({ type: 'pass' });
 
   const speakingForPartner = s !== b.turn;
@@ -89,10 +92,11 @@ export function applySpeech(g: GameState, action: Action): boolean {
     return false;
   }
 
-  if (action.type === 'bid') {
-    b.high = { seat: s, value: action.value };
+  if (action.type === 'bid' || action.type === 'pcc') {
+    const value = action.type === 'pcc' ? PCC : action.value;
+    b.high = { seat: s, value };
     b.passes = 0; // §B-5
-    record(g, { stage: b.stage, seat: s, action: 'bid', value: action.value, inSeat });
+    record(g, { stage: b.stage, seat: s, action: 'bid', value, inSeat });
   } else {
     b.passes += 1;
     record(g, { stage: b.stage, seat: s, action: 'pass', inSeat });

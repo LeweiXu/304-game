@@ -26,9 +26,17 @@ export function checkInvariants(m: MatchState) {
     // Every seat holds the same number of cards, give or take the one played this trick.
     const counts = g.hands.map((h, s) => h.length + (g.trump?.seat === s && g.trump.indicator ? 1 : 0));
     const played = g.play!.trick.map((c) => c.seat);
-    counts.forEach((n, s) => expect(n + (played.includes(s as never) ? 1 : 0)).toBe(9 - g.play!.round));
+    counts.forEach((n, s) => {
+      if (s === g.pccOut) expect(n).toBe(8); // sits the game out with their cards
+      else expect(n + (played.includes(s as never) ? 1 : 0)).toBe(9 - g.play!.round);
+    });
   }
-  if (g.end?.kind === 'played') expect(g.end.points[0] + g.end.points[1]).toBe(304);
+  // Played out to the end (not a lost PCC or a claim): every point is accounted for.
+  // (In PCC the partner who sits out keeps their cards, so count those too.)
+  if (g.end?.kind === 'played' && g.end.tricks[0] + g.end.tricks[1] === 8) {
+    const unplayed = g.pccOut !== null ? handPoints(g.hands[g.pccOut]) : 0;
+    expect(g.end.points[0] + g.end.points[1] + unplayed).toBe(304);
+  }
 }
 
 describe('random legal playouts', () => {

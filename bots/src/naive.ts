@@ -1,7 +1,8 @@
 // A simple rule-based bot. It only sees its own PlayerView and always picks
 // one of view.legal, so it can't cheat or make an illegal move.
 //
-// Bidding: open with a decent 4-card hand, rarely compete, almost never bid on 8.
+// Bidding: open with a decent 4-card hand, rarely compete, almost never bid on 8, never PCC.
+// Calls: takes an absolute hand, claims the threshold when it can, never calls Spoilt Trumps.
 // Trump: longest suit, fold its weakest card.
 // Play: win cheaply when it can, feed points to a winning partner, cut only
 // when there are points worth taking, otherwise throw the cheapest card.
@@ -17,8 +18,14 @@ export function naiveBot(v: PlayerView, rng: Rng): Action {
     case 'bid8': return bid8(v);
     case 'trump4':
     case 'trump8': return { type: 'trump', card: chooseTrumpCard(v.hand) };
-    case 'declare': return { type: 'declare', open: false };
-    case 'play': return { type: 'play', card: chooseCard(v) };
+    case 'declare': return has(v, 'absolute') ? { type: 'absolute' } : { type: 'declare', open: false };
+    case 'show': {
+      // Show the weakest trump (gives the least away).
+      if (has(v, 'absolute')) return { type: 'absolute' };
+      const shows = v.legal.flatMap((a) => (a.type === 'show' ? [a.card] : []));
+      return { type: 'show', card: weakest(shows) };
+    }
+    case 'play': return has(v, 'claim') ? { type: 'claim' } : { type: 'play', card: chooseCard(v) };
     default: return v.legal[0];
   }
 }

@@ -322,6 +322,29 @@ A player **must** call Caps on their turn, at the **earliest turn** at which, gi
 
 When calling Caps, the player must **declare that order**: the exact sequence in which they will play every card left in their hand. The declared order is **binding**. The player may not change it later in response to what the other players reveal, and the call is judged on whether that one order wins every remaining round.
 
+#### Precise definition
+
+These are the definitions scrutiny (and the game engine) uses. Everything else in this section follows from them.
+
+- **The caller's information.** Everything the calling player can see or remember at that moment: their own remaining cards; every card they have seen played, who played it and in which round; which players failed to follow which led suits (so are known to be void in them); every bid; the trump suit, if they know it (they are the trumper, or trump is open); the folded trump card, if it has been flipped or played face up; and, for the Trumper, every folded card they inspected at the end of a round. Face-down cards the caller never saw are known only as "some card that player played face down".
+- **A consistent world.** Any way of giving the cards the caller has not seen to the other players, with each player holding the right number of cards, that agrees with all of the caller's information (voids, the Trumper holding the folded card, the trump suit, and so on). If the caller does not know the trump suit, every suit that agrees with what they have seen is a possible trump suit.
+- **A declared order.** A sequence containing every card left in the caller's hand, in the order they will play them.
+- **The order guarantees the sweep** if, in every consistent world and for every sequence of legal plays by the other three players, playing the declared order card by card is always a legal play for the caller, and the caller's team wins every remaining round. The partner counts as one of the "other three players": their choices are treated like an opponent's, so only plays the rules force on them can be relied on.
+- **A Caps opportunity.** One of the caller's own turns, before they play their card for that turn, at which the caller's team has won every round so far and some declared order guarantees the sweep.
+- **First opportunity.** For each player, the earliest of their turns that is a Caps opportunity. Each player has their own: two players on the same team know different things, so their first opportunities can differ.
+
+A call made on the caller's turn with a declared order is then judged like this:
+
+| The call | Result |
+|---|---|
+| Made at the caller's first opportunity, and the declared order guarantees the sweep | **Correct Caps** |
+| Made at a later opportunity of the caller (the declared order still guarantees the sweep) | **Late Caps** |
+| No order guaranteed the sweep when the call was made | **Early Caps** |
+| Some order guaranteed the sweep, but not the declared one; or a round had already been lost | **Wrong Caps** |
+| Never made, the team wins all 8 rounds, and some player of the team had a Caps opportunity during play | **Late Caps** |
+
+External Caps uses exactly the same definitions, with the non-Trumping team as the calling side.
+
 The critical distinction is between **choice** and **deducible certainty**. You cannot rely on your partner making an optimal or intelligent play — you cannot assume they will *choose* to play a particular card when they have options. However, if you can **deduce** from the cards played that your partner holds a specific card, and the rules force a guaranteed outcome (e.g. your partner holds the last remaining card of a suit and must therefore win a round when that suit is led), then you **can** factor that into a Caps call. The test is whether the outcome is guaranteed by the rules alone, not by hoping your partner plays well.
 
 This is what makes Caps genuinely difficult. It requires not just tracking your own hand, but deducing the state of all hands from the history of play, and identifying that *some* winning line exists in every consistent world.
@@ -426,6 +449,18 @@ The obligation is checked on the player's own turns. The **first opportunity** i
 | PCC | Caps and External Caps mechanics do not apply |
 
 ---
+
+## Optional Rules
+
+These are switched on or off per match (in the site's settings). They are not part of the standard house game.
+
+### Claim Threshold
+
+Off by default. A team wins the game as soon as it has the points it needs: the bid for the betting team, or **304 − bid + 1** for the opposition (145 against a 160 bid). With Claim Threshold on, a player whose team has reached its number, counting only cards they have seen, may **claim** on their turn. The game ends at once and is scored as a win for the claiming team, without playing the remaining rounds. It does not apply to PCC, which is decided by rounds, not points.
+
+### Claim Balance
+
+Off by default, and not available on the site yet. Like Caps, but for the remaining rounds only: once a player knows their team will win every remaining round (using the same definition as a Caps opportunity, without the requirement to have won every round so far), they must claim the balance. Missing the claim costs the team **1 stone** (the opponents give one away).
 
 ## Scoring
 

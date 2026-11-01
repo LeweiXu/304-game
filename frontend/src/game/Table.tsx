@@ -1,15 +1,19 @@
 // The game table. Same structure as the old one: stone scores top-left,
 // partner on top, opponents left and right, the trick in the middle, you at
 // the bottom. Everything stays inside the play page's box.
-import type { PlayerView, Seat, SeenCard } from '@engine';
+import { useEffect, useState } from 'react';
+import { PCC, type PlayerView, type Seat, type SeenCard } from '@engine';
 import { Card, CardBack } from './Card';
 import Controls from './Controls';
-import { bidLabel, endSummary, HUMAN, SEAT_NAMES, SEAT_POSITION, speechLabel, SUIT_NAME, SUIT_SYMBOL, teamName } from './labels';
+import {
+  bidLabel, cardLabel, endSummary, HUMAN, penaltySummary, SEAT_NAMES, SEAT_POSITION, speechLabel, SUIT_NAME, SUIT_SYMBOL, teamName,
+} from './labels';
 import type { useMatch } from './useMatch';
 
 type Game = ReturnType<typeof useMatch>;
+type Props = { game: Game; assist: boolean; onSettings: () => void };
 
-export default function Table({ game }: { game: Game }) {
+export default function Table({ game, assist, onSettings }: Props) {
   const { view, pausing } = game;
   if (!view) return null;
   return (
@@ -17,11 +21,11 @@ export default function Table({ game }: { game: Game }) {
       <div className="table-top">
         <Scoreboard view={view} />
         <Opponent view={view} seat={2} />
-        <GameInfo view={view} onQuit={game.quit} />
+        <GameInfo view={view} assist={assist} onQuit={game.quit} onSettings={onSettings} />
       </div>
       <div className="table-middle">
         <Opponent view={view} seat={3} />
-        <Center view={view} pausing={pausing} onContinue={game.resume} />
+        <Center view={view} pausing={pausing} assist={assist} onContinue={game.resume} />
         <Opponent view={view} seat={1} />
       </div>
       <Controls view={view} pausing={pausing} onAct={game.act} />
@@ -46,12 +50,15 @@ function Scoreboard({ view }: { view: PlayerView }) {
   );
 }
 
-function GameInfo({ view, onQuit }: { view: PlayerView; onQuit: () => void }) {
-  const bid = view.bid8 ?? view.bid4;
+function GameInfo({ view, assist, onQuit, onSettings }: { view: PlayerView; assist: boolean; onQuit: () => void; onSettings: () => void }) {
+  const bid = view.contract;
   const t = view.trump;
   let trump = 'not chosen';
-  if (t?.suit) trump = `${SUIT_SYMBOL[t.suit]} ${SUIT_NAME[t.suit]}${t.open ? '' : ' (only you know)'}`;
-  else if (t) trump = 'face down';
+  if (t?.suit) {
+    trump = `${SUIT_SYMBOL[t.suit]} ${SUIT_NAME[t.suit]}`;
+    if (!t.open) trump += ' (only you know)';
+    else if (t.shown) trump += ` (${SEAT_NAMES[t.seat]} showed ${cardLabel(t.shown)})`;
+  } else if (t) trump = 'face down';
   return (
     <div className="game-info">
       <dl>
@@ -59,11 +66,17 @@ function GameInfo({ view, onQuit }: { view: PlayerView; onQuit: () => void }) {
         <div><dt>Dealer</dt><dd>{SEAT_NAMES[view.dealer]}</dd></div>
         {bid && <div><dt>Bid</dt><dd>{bidLabel(bid.value)}, {SEAT_NAMES[bid.seat]}</dd></div>}
         {bid && <div><dt>Trump</dt><dd>{trump}</dd></div>}
-        {view.play && (
-          <div><dt>Points</dt><dd title="Folded cards are counted when the game ends">us {view.play.visiblePoints[0]}, them {view.play.visiblePoints[1]}</dd></div>
+        {assist && view.play && (
+          <div><dt>Points</dt><dd title="Folded cards you haven't seen are counted when the game ends">us {view.play.visiblePoints[0]}, them {view.play.visiblePoints[1]}</dd></div>
+        )}
+        {assist && view.thresholds && (
+          <div><dt>Need</dt><dd>us {view.thresholds[0]}, them {view.thresholds[1]}</dd></div>
         )}
       </dl>
-      <button type="button" className="link-btn" onClick={onQuit}>Leave game</button>
+      <div className="info-links">
+        <button type="button" className="link-btn" onClick={onSettings}>Settings</button>
+        <button type="button" className="link-btn" onClick={onQuit}>Leave game</button>
+      </div>
     </div>
   );
 }
@@ -84,6 +97,7 @@ function SeatLabel({ view, seat }: { view: PlayerView; seat: Seat }) {
       <span>{SEAT_NAMES[seat]}{seat === 2 && <small> partner</small>}</span>
       {view.dealer === seat && <b className="badge" title="Dealer">D</b>}
       {trumper === seat && <b className="badge trump" title="Trumper">T</b>}
+      {view.pccOut === seat && <b className="badge" title="Sits this game out (PCC)">out</b>}
     </div>
   );
 }
@@ -94,7 +108,7 @@ function Opponent({ view, seat }: { view: PlayerView; seat: Seat }) {
   const speech = lastSpeech(view, seat);
   const t = view.trump;
   return (
-    <div className={`player player-${pos}`}>
+    <div className={`player player-${pos}${view.pccOut === seat ? ' sitting-out' : ''}`}>
       <SeatLabel view={view} seat={seat} />
       <div className="player-cards">
         <div className="backs" aria-label={`${count} cards`}>
@@ -123,33 +137,48 @@ function TrickCards({ cards }: { cards: SeenCard[] }) {
   );
 }
 
-function Center({ view, pausing, onContinue }: { view: PlayerView; pausing: boolean; onContinue: () => void }) {
+function Center({ view, pausing, assist, onContinue }: { view: PlayerView; pausing: boolean; assist: boolean; onContinue: () => void }) {
   const p = view.play;
+  // Between rounds you may inspect the last completed trick (rules: never mid-trick, never older tricks).
+  const [inspecting, setInspecting] = useState(false);
+  const betweenRounds = !!p && view.phase === 'play' && p.trick.length === 0 && !!p.lastTrick && !pausing;
+  useEffect(() => { if (!betweenRounds) setInspecting(false); }, [betweenRounds]);
+
   if (p) {
-    const showLast = pausing && p.lastTrick;
+    const showLast = (pausing || inspecting) && p.lastTrick;
     const cards = showLast ? p.lastTrick!.cards : p.trick;
     const hidden = showLast && p.lastTrick!.cards.some((c) => c.card === null);
     // As trumper you privately inspect folded cards after each trick (they stay face down on the table).
     const inspected = showLast && view.trump?.seat === HUMAN
       ? p.lastTrick!.cards.filter((c) => c.faceDown && !c.revealed && c.seat !== HUMAN && c.card)
       : [];
+    const label = showLast
+      ? `Round ${p.lastTrick!.round} of 8${inspecting ? ' (last trick)' : ''}`
+      : view.phase === 'play' ? `Round ${p.round} of 8` : 'Game over';
     return (
       <div className="center">
         <p className="center-label">
-          {showLast ? `Round ${p.lastTrick!.round} of 8` : view.phase === 'play' ? `Round ${p.round} of 8` : 'All 8 rounds played'}
+          {label}
           {!showLast && p.trick.length > 0 && <span>, led by {SEAT_NAMES[p.leader]}</span>}
+          {betweenRounds && (
+            <button type="button" className="link-btn inspect" onClick={() => setInspecting(!inspecting)}>
+              {inspecting ? 'back to the table' : 'see last trick'}
+            </button>
+          )}
         </p>
         <TrickCards cards={cards} />
         {showLast && (
           <p className="trick-result">
-            {SEAT_NAMES[p.lastTrick!.winner]} {p.lastTrick!.winner === HUMAN ? 'win' : 'wins'} the trick, +{p.lastTrick!.visiblePoints}{hidden ? ' plus folded cards' : ''}
+            {SEAT_NAMES[p.lastTrick!.winner]} {p.lastTrick!.winner === HUMAN ? 'win' : 'wins'} the trick
+            {assist && <>, +{p.lastTrick!.visiblePoints}{hidden ? ' plus folded cards' : ''}</>}
             {p.lastTrick!.revealedTrump && view.trump?.suit && <span>. Trump is {SUIT_SYMBOL[view.trump.suit]} {SUIT_NAME[view.trump.suit]}</span>}
           </p>
         )}
         {inspected.length > 0 && (
-          <p className="center-wait">You check the folded cards: {inspected.map((c) => `${SEAT_NAMES[c.seat]} ${c.card!.slice(0, -1)}${SUIT_SYMBOL[c.card!.slice(-1) as 'c']}`).join(', ')}</p>
+          <p className="center-wait">You check the folded cards: {inspected.map((c) => `${SEAT_NAMES[c.seat]} ${cardLabel(c.card!)}`).join(', ')}</p>
         )}
-        {showLast && <button type="button" className="btn primary" onClick={onContinue} autoFocus>Continue</button>}
+        <Notices view={view} />
+        {pausing && showLast && <button type="button" className="btn primary" onClick={onContinue} autoFocus>Continue</button>}
       </div>
     );
   }
@@ -164,11 +193,14 @@ function Center({ view, pausing, onContinue }: { view: PlayerView; pausing: bool
       ? `No 8-card bids. ${bidLabel(view.bid4.value)} by ${SEAT_NAMES[view.bid4.seat]} stands for now`
       : 'No bids yet';
   } else if (view.phase === 'trump4' || view.phase === 'trump8') {
-    title = 'Choosing trump';
+    title = view.contract?.value === PCC ? 'PCC: choosing trump' : 'Choosing trump';
     detail = view.toAct === HUMAN ? null : `${SEAT_NAMES[view.toAct!]} is placing a card face down`;
   } else if (view.phase === 'declare') {
     title = 'Open or closed trump';
     detail = view.toAct === HUMAN ? null : `${SEAT_NAMES[view.toAct!]} is deciding`;
+  } else if (view.phase === 'show') {
+    title = view.pccOut !== null ? `PCC by ${SEAT_NAMES[view.trump!.seat]}` : 'Open trump';
+    detail = view.toAct === HUMAN ? null : `${SEAT_NAMES[view.toAct!]} is choosing a trump card to show`;
   }
   return (
     <div className="center">
@@ -179,25 +211,37 @@ function Center({ view, pausing, onContinue }: { view: PlayerView; pausing: bool
   );
 }
 
+/** Penalties so far this game (from wrong Spoilt Trumps calls). */
+function Notices({ view }: { view: PlayerView }) {
+  if (!view.penalties.length) return null;
+  return (
+    <div className="notices">
+      {view.penalties.map((pen, i) => <p key={i} className="center-wait">{penaltySummary(pen)} (settled at the end of the game)</p>)}
+    </div>
+  );
+}
+
 function Result({ view, onNext, onNewMatch }: { view: PlayerView; onNext: () => void; onNewMatch: () => void }) {
   const end = view.end!;
   const matchOver = view.matchWinner !== null;
-  let heading = 'Game over';
+  let heading = 'Pass-on';
   if (end.kind === 'played') heading = end.made === (end.bidTeam === 0) ? 'Your team wins this game' : 'Your team loses this game';
   else if (end.kind === 'redeal') heading = 'Redeal';
-  else heading = 'Pass-on';
+  else if (end.kind === 'spoilt') heading = 'Spoilt Trumps';
+  else if (end.kind === 'absolute') heading = 'Absolute hand';
   if (matchOver) heading = view.matchWinner === 0 ? 'You won the match' : 'East and West won the match';
   return (
     <div className="result-backdrop">
       <div className="result" role="dialog" aria-label={heading}>
         <h2>{heading}</h2>
         <p>{endSummary(end)}</p>
+        {view.penalties.map((pen, i) => <p key={i}>{penaltySummary(pen)}</p>)}
         {end.kind === 'played' && (
           <table className="result-table">
-            <thead><tr><th /><th>Points</th><th>Stone left</th></tr></thead>
+            <thead><tr><th /><th>{end.pcc ? 'Rounds' : 'Points'}</th><th>Stone left</th></tr></thead>
             <tbody>
               {[0, 1].map((team) => (
-                <tr key={team}><th>{teamName(team)}</th><td>{end.points[team]}</td><td>{view.stone[team]}</td></tr>
+                <tr key={team}><th>{teamName(team)}</th><td>{end.pcc ? end.tricks[team] : end.points[team]}</td><td>{view.stone[team]}</td></tr>
               ))}
             </tbody>
           </table>

@@ -50,7 +50,7 @@ describe('what a seat can see', () => {
     expect(v.contract).toEqual({ seat: A, value: 160 });
   });
 
-  it('declaring open without priority shows the folded card; with priority it stays private until led', () => {
+  it('declaring open: without priority the trumper picks a trump card to show; with priority they lead trump instead', () => {
     const base = () => {
       let m = matchWithDealer(3);
       for (const a of [pass, bid(160), pass, pass, pass] as Action[]) m = apply(m, a); // seat 1 wins, seat 0 has priority
@@ -58,9 +58,14 @@ describe('what a seat can see', () => {
       for (let i = 0; i < 4; i++) m = apply(m, pass);
       return m;
     };
-    const open = apply(base(), { type: 'declare', open: true });
-    expect(viewFor(open, 0).trump).toMatchObject({ open: true, declaredOpen: true });
-    expect(viewFor(open, 0).trump!.folded).not.toBeNull();
+    let open = apply(base(), { type: 'declare', open: true });
+    expect(open.game.phase).toBe('show'); // seat 1 lacks priority, so they show a trump card of their choice
+    const suit = open.game.trump!.suit;
+    const shows = open.game.hands[1].filter((c) => c.endsWith(suit));
+    expect(viewFor(open, 1).legal).toEqual(shows.map((card) => ({ type: 'show', card })));
+    open = apply(open, { type: 'show', card: shows.at(-1)! });
+    expect(open.game.phase).toBe('play');
+    expect(viewFor(open, 0).trump).toMatchObject({ open: true, declaredOpen: true, shown: shows.at(-1), folded: null });
 
     // Dealer 0, so seat 1 has priority and wins the bid: declaring open means leading trump instead.
     let p = matchWithDealer(0);

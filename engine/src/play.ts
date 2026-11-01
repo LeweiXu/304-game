@@ -1,14 +1,40 @@
 // Trick play, including closed-trump face-down rules (§T-1 to §T-6),
 // folded-card resolution and exhausted trumps. Works on a draft GameState.
 import { pointsOf, suitOf, winningIndex, type Card, type Suit } from './cards';
-import { nextSeat, SEATS, teamOf } from './seats';
+import { nextSeat, SEATS, teamOf, type Seat } from './seats';
 import type { GameState, PlayState, TrickCard } from './types';
 
 export interface PlayOption { card: Card; faceDown: boolean }
 
 export function newPlay(g: GameState): PlayState {
-  const priority = nextSeat(g.dealer);
-  return { round: 1, leader: priority, turn: priority, trick: [], tricks: [], points: [0, 0] };
+  // Priority leads round 1, except in PCC, where the trumper does.
+  const first = g.pccOut !== null ? g.trump!.seat : nextSeat(g.dealer);
+  return { round: 1, leader: first, turn: first, trick: [], tricks: [], points: [0, 0] };
+}
+
+/** The next player to act after `s`, skipping a PCC partner who sits out. */
+export function nextActive(g: GameState, s: Seat): Seat {
+  const n = nextSeat(s);
+  return n === g.pccOut ? nextSeat(n) : n;
+}
+
+/** Cards in a full trick: 4, or 3 in PCC. */
+export const trickSize = (g: GameState) => (g.pccOut === null ? 4 : 3);
+
+/**
+ * Points per team from the cards `viewer` has seen (their own and face-up cards,
+ * revealed trumps, and every folded card once a trick is over if they're the
+ * trumper). Matches PlayerView.play.visiblePoints.
+ */
+export function pointsSeenBy(g: GameState, viewer: Seat): [number, number] {
+  const out: [number, number] = [0, 0];
+  const trumper = g.trump?.seat;
+  for (const tr of g.play?.tricks ?? []) {
+    for (const c of tr.cards) {
+      if (!c.faceDown || c.revealed || c.seat === viewer || viewer === trumper) out[teamOf(tr.winner)] += pointsOf(c.card);
+    }
+  }
+  return out;
 }
 
 export const ledSuit = (trick: readonly TrickCard[]): Suit | null => (trick.length ? suitOf(trick[0].card) : null);
@@ -32,7 +58,7 @@ export function playOptions(g: GameState): PlayOption[] {
   if (p.trick.length === 0) {
     if (t.open) {
       if (t.mustLeadTrump && p.round === 1 && trumps.length) return up(trumps);
-      if (isTrumper && trumpsExhausted(g) && trumps.length) return up(trumps);
+      if (isTrumper && g.pccOut === null && trumpsExhausted(g) && trumps.length) return up(trumps); // not in PCC
     } else if (isTrumper && p.round === 1 && nonTrumps.length) {
       return up(nonTrumps); // §T-1: no trump lead from priority in round 1 of closed trump
     }
@@ -59,10 +85,10 @@ function trumpsExhausted(g: GameState): boolean {
   const p = g.play!, t = g.trump!;
   const last = p.tricks.at(-1);
   if (!last || last.leader !== t.seat || suitOf(last.cards[0].card) !== t.suit) return false;
-  return SEATS.every((s) => s === t.seat || !g.hands[s].some((c) => suitOf(c) === t.suit));
+  return SEATS.every((s) => s === t.seat || s === g.pccOut || !g.hands[s].some((c) => suitOf(c) === t.suit));
 }
 
-/** Plays a card for the player to move. Returns true when the 8th trick completes. */
+/** Plays a card for the player to move. Returns true when the game's play is over (8 tricks, or a lost PCC). */
 export function applyPlay(g: GameState, card: Card): boolean {
   const p = g.play!, t = g.trump!;
   const option = playOptions(g).find((o) => o.card === card);
@@ -77,11 +103,12 @@ export function applyPlay(g: GameState, card: Card): boolean {
   }
   p.trick.push({ seat, card, faceDown: option.faceDown, revealed: false });
 
-  if (p.trick.length < 4) {
-    p.turn = nextSeat(seat);
+  if (p.trick.length < trickSize(g)) {
+    p.turn = nextActive(g, seat);
     return false;
   }
   resolveTrick(g);
+  if (g.pccOut !== null && teamOf(p.tricks.at(-1)!.winner) !== teamOf(t.seat)) return true; // PCC lost: no need to play on
   return p.round > 8;
 }
 

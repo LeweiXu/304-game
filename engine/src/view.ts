@@ -7,9 +7,9 @@
 // view keeps the full history.
 import { encodeAction } from './actions';
 import { pointsOf, suitOf, type Card, type Suit } from './cards';
-import { legalActions, toAct } from './game';
+import { legalActions, thresholdFor, toAct } from './game';
 import { nextSeat, teamOf, type Seat, type Team } from './seats';
-import type { Action, GameEnd, HighBid, MatchState, Phase, Speech, TrickCard } from './types';
+import { PCC, type Action, type GameEnd, type HighBid, type MatchState, type Penalty, type Phase, type RuleOptions, type Speech, type TrickCard } from './types';
 
 export interface SeenCard {
   seat: Seat;
@@ -45,6 +45,8 @@ export interface PlayerView {
   matchWinner: Team | null;
   /** Outcomes of the earlier games in this match, oldest first. */
   history: GameEnd[];
+  /** House-rule options in force for this game. */
+  rules: RuleOptions;
 
   /** My cards (not including my folded trump card while it sits on the table). */
   hand: Card[];
@@ -65,8 +67,12 @@ export interface PlayerView {
   bid4: HighBid | null;
   /** Winning 8-card bid, if anyone bid on 8 cards. */
   bid8: HighBid | null;
-  /** The bid being played for: bid8 if there is one, else bid4. */
+  /** The bid being played for: bid8 if there is one, else bid4. value is PCC (999) for a PCC bid. */
   contract: HighBid | null;
+  /** PCC: the trumper's partner, who sits this game out. */
+  pccOut: Seat | null;
+  /** Points each team needs to win the game (bid / 305 - bid), per team. Null before a contract, and for PCC. */
+  thresholds: [number, number] | null;
 
   trump: {
     /** The trumper (the contract holder once trump is chosen). */
@@ -85,6 +91,10 @@ export interface PlayerView {
     folded: Card | null;
     /** Round in which a cut revealed trump, or null. */
     revealedInRound: number | null;
+    /** The trump card shown to the table on an open declaration or for PCC, or null. */
+    shown: Card | null;
+    /** Open trump declared with priority: round 1 must be led with a trump. */
+    mustLeadTrump: boolean;
   } | null;
 
   play: {
@@ -108,6 +118,10 @@ export interface PlayerView {
     unseenFaceDown: number[];
   } | null;
 
+  /** Spoilt Trumps calls so far this game, per seat (a call is public). */
+  spoiltCalled: boolean[];
+  /** Penalties handed out this game, settled when it ends. */
+  penalties: Penalty[];
   /** How the game ended (full points included), once phase is 'over'. */
   end: GameEnd | null;
 }
@@ -146,6 +160,7 @@ export function viewFor(m: MatchState, seat: Seat): PlayerView {
   }
   for (const c of trick) if (c.card === null) unseenFaceDown[c.seat] += 1;
   const legal = actor === seat ? legalActions(g) : [];
+  const contract = g.bid8 ?? g.bid4;
 
   return {
     seat,
@@ -156,6 +171,7 @@ export function viewFor(m: MatchState, seat: Seat): PlayerView {
     stone: [m.stone[0], m.stone[1]],
     matchWinner: m.winner,
     history: [...m.history.slice(0, g.phase === 'over' ? -1 : undefined)],
+    rules: { ...g.rules },
     hand: [...g.hands[seat]],
     handCounts: g.hands.map((h) => h.length),
     toAct: actor,
@@ -168,7 +184,11 @@ export function viewFor(m: MatchState, seat: Seat): PlayerView {
     auction: [...g.auction],
     bid4: g.bid4,
     bid8: g.bid8,
-    contract: g.bid8 ?? g.bid4,
+    contract,
+    pccOut: g.pccOut,
+    thresholds: contract && contract.value !== PCC && g.phase !== 'bid4' && g.phase !== 'bid8'
+      ? [0, 1].map((team) => thresholdFor(contract.value, team === teamOf(contract.seat))) as [number, number]
+      : null,
     trump: t && {
       seat: t.seat,
       open: t.open,
@@ -178,6 +198,8 @@ export function viewFor(m: MatchState, seat: Seat): PlayerView {
       indicator: t.seat === seat ? t.indicator : null,
       folded: t.seat === seat || t.foldedPublic ? t.folded : null,
       revealedInRound: p?.tricks.find((tr) => tr.revealedTrump)?.round ?? null,
+      shown: t.shown,
+      mustLeadTrump: t.mustLeadTrump && (p?.round ?? 1) === 1,
     },
     play: p && {
       round: p.round, leader: p.leader, turn: p.turn,
@@ -186,6 +208,8 @@ export function viewFor(m: MatchState, seat: Seat): PlayerView {
       lastTrick: tricks.at(-1) ?? null,
       tricks, tricksWon, visiblePoints, unseenFaceDown,
     },
+    spoiltCalled: [...g.spoiltCalled],
+    penalties: [...g.penalties],
     end: g.end,
   };
 }
