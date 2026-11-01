@@ -11,18 +11,26 @@ Ports 8000 (G8), 8001 (LOG) and 8002 (novels) were taken, so 304 uses **8003**.
 
 ## Backend
 
-Lives on the server at `~/304_Project/`, runs as the systemd user service `304-api` (lingering is on, so it survives reboots). Right now it's a zero-dependency Node script that only answers `/health`, since bot games don't need a server. The homeserver has Node 18.
+FastAPI, served by uvicorn as the systemd user service `304-api` (lingering is on, so it survives reboots). Everything on the server:
+
+| Path | What |
+|---|---|
+| `~/304_Project/` | the backend code, synced by `deploy.sh` with `rsync --delete`, so don't keep state in here |
+| `~/venv-304/` | Python 3.12 venv, created by the first deploy |
+| `~/304-api.env` | config (`CORS_ORIGINS`), created by the first deploy and never overwritten. `chmod 600` |
+| `~/.config/systemd/user/304-api.service` | copied from `backend/304-api.service` on each deploy |
 
 Deploy (from WSL, at the repo root):
 
 ```bash
-./deploy.sh      # rsync backend/ to the server, install the unit, restart, health check
+./deploy.sh      # rsync, pip install -r requirements.txt, install the unit, restart, health check
 ```
 
-Server-side config goes in `~/304-api.env` (outside the synced folder, so `rsync --delete` never wipes it). Things it can set: `PORT`, `CORS_ORIGINS` (comma separated, defaults to the Vercel domain plus localhost:5173).
+To allow another frontend origin, edit `~/304-api.env` on the server (comma separated) and restart.
 
 ```bash
 ssh homeserver 'systemctl --user status 304-api'
+ssh homeserver 'systemctl --user restart 304-api'
 ssh homeserver 'journalctl --user -u 304-api -f'
 ```
 

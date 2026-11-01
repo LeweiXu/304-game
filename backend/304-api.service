@@ -1,12 +1,12 @@
 [Unit]
-Description=304 API (Node, port 8003)
+Description=304 API (FastAPI, port 8003)
 After=network.target
 
 [Service]
 Type=simple
 WorkingDirectory=%h/304_Project
 EnvironmentFile=-%h/304-api.env
-ExecStart=/usr/bin/node server.mjs
+ExecStart=%h/venv-304/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8003
 Restart=on-failure
 RestartSec=3
 TimeoutStopSec=30

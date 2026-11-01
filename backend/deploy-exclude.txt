@@ -1,5 +1,11 @@
 # Server-only or local-only stuff that rsync --delete must not touch.
 .env
-node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+tests/
+requirements-dev.txt
 *.log
 data/
