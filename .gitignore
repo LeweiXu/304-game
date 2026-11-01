@@ -1,55 +1,28 @@
-CLAUDE_CODE_CONTEXT.md
-.mock-screenshots/
-
-# Per-developer Claude Code settings (hooks, permission grants). The
-# repo-tracked .claude/settings.json holds the shared workflow; .local
-# is private to one machine.
-.claude/settings.local.json
-
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.venv/
-*.egg
-.pytest_cache/
-
 # Node / Vite / TypeScript
-node_modules
 node_modules/
+dist/
+build/
 .vite/
 *.tsbuildinfo
 coverage/
-.nyc_output/
 
-# Build outputs
-dist/
-build/
+# Python (in case the backend ends up in Python)
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
 
 # Env / secrets
 .env
-.env.local
-.env.*.local
+.env.*
 
-# IDE / editors
+# Editors / OS
 .vscode/
 .idea/
 *.swp
-*.swo
-*~
-
-# OS
 .DS_Store
 Thumbs.db
-
-# Logs
 *.log
 
-# Hard-caps curator work-in-progress (pool generation streams here;
-# committed pool/selection JSONs should be force-added explicitly).
-site/public/puzzles/pool*.jsonl
-site/public/puzzles/pool*.meta.json
-
-
-# Generated leaderboard data (rebuilt from data/ on every dev/build)
-site/public/data/
+# Per-machine Claude Code settings
+.claude/settings.local.json

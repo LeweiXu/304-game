@@ -1,45 +1,37 @@
----
-title: 304 — Claude Code workspace conventions
-status: living document
-purpose: One-page orientation. Anything Claude needs in every session. Links to longer-form rules in .claude/.
----
+# 304
 
-# Read first
+A website for playing 304 (a Sri Lankan four-player partnership trick-taking card game) in the browser. First target is single player against three bots. Online multiplayer with real people comes later, so don't build for it yet, but don't paint us into a corner either.
 
-1. [.claude/soul.md](.claude/soul.md) — the design constitution. Where rules contradict the soul, soul wins.
-2. [.claude/directory.md](.claude/directory.md) — repo layout. Where things live, where new code goes.
-3. [docs/README.md](docs/README.md) — the docs tree (handoffs / explainers / specs) and what belongs where.
+This repo started as a fork of a friend's 304 project. That code is gone; only the rules docs were kept. Don't go digging through git history to resurrect the old engine or apps unless asked.
 
-# The docs tree at a glance
+## Layout
 
-| Folder | Purpose | Lifecycle |
-|---|---|---|
-| `docs/handoffs/` | Live, intra-session state. The "what to pick up next session" briefs. | Updated during a session. Deleted when the work lands. Git log preserves history. |
-| `docs/explainers/` | Plain-English, lay-reader-friendly write-ups of *interesting* things — algorithms, mental models, the "why under the hood". | Curated by Marc post-session ("this was interesting; write it up"). Not created automatically. |
-| `docs/specs/` | Durable reference. Rules, formalism, invariants. | Edited only when the underlying truth changes. |
+```
+frontend/     browser app: UI, rules engine, bots. Everything needed for bot games.
+  public/     static assets Vite serves as-is (card art, fonts, favicon)
+backend/      multiplayer server. Empty until we do multiplayer.
+docs/rules/   the rules. Source of truth for what the engine must do.
+design-*.html throwaway design mockups at the repo root, delete once a direction is picked
+```
 
-Full conventions in [.claude/docs-workflow.md](.claude/docs-workflow.md).
+## Rules are the source of truth
 
-# Git workflow — commit-on-turn
+- [docs/rules/rules.md](docs/rules/rules.md): the house rules, written for people. Bidding, trump, play, caps, scoring.
+- [docs/rules/play_invariants.md](docs/rules/play_invariants.md): what must hold at every play-phase state and every legal move.
+- [docs/rules/caps_formalism.md](docs/rules/caps_formalism.md): the formal definition of caps (single-dummy, per information set).
 
-After **any** assistant turn that modified tracked files, stage those files explicitly and commit with a clear one-line message before signing off. Push to `origin/main` immediately — there is no PR flow for routine work on this repo.
+If code and these docs disagree, the docs win, or we change the docs on purpose first. Rule numbers like `§B-4` are worth citing in code comments and test names.
 
-- **Don't** use `git add -A` or `git add .` — pick the specific files you touched. The repo has volatile artifacts (`tools/bots/elo/results.json` during tournaments, generated puzzle pools) that should not auto-commit.
-- **Don't** stage files modified by the user concurrently (e.g. the user edits `dds-core.ts` while you reorganise docs). Stage your own work only.
-- **Don't** force-push, amend published commits, or skip hooks unless explicitly asked.
+## Engine principles
 
-A Stop hook in [.claude/settings.json](.claude/settings.json) acts as a safety net: if a turn left staged-but-uncommitted changes behind, the hook commits and pushes them with an auto-generated message. In normal flow the hook is a no-op because Claude has already committed.
+- The rules engine is pure TypeScript with no DOM, no framework, no timers. State in, action in, new state out. The UI and the bots both sit on top of it.
+- Hidden information matters. Each seat only ever sees its own projected view of the state (own hand, public plays, face-down trump hidden). Bots get that same view, never the full deal, so they can't cheat and so the same code works later when a server holds the real state.
+- Bots are deterministic given (their view, rng seed). Use a seeded RNG, never `Math.random()` inside engine or bot code.
+- Heavy bot thinking runs in a Web Worker so the table never freezes.
 
-Full rules + the hook script: [.claude/auto-commit.md](.claude/auto-commit.md).
+## Working here
 
-# UI-touching work
-
-See [.claude/gui-verification.md](.claude/gui-verification.md). Tests prove code runs; they don't prove the UI looks right.
-
-# Standing context (always loaded)
-
-- 304 is a Tamil South-Asian trick-taking card game. The single ship target is a static GitHub Pages site (304dle) plus a multiplayer surface.
-- The bot zoo lives at `engine/bots/`. The CSP / caps machinery lives at `engine/caps-csp.ts` and `engine/info.ts`.
-- Determinism is a hard invariant for bots: `(info-set, rng seed)` → same play, byte-for-byte.
-- Any change to the leaderboard surfaces (`site/leaderboard*.html`, `site/js/leaderboard/`) is bound by [.claude/leaderboard-design.md](.claude/leaderboard-design.md).
-- Play data (stats.xlsx, betting CSVs) lives in `data/`; the build parses it into `site/public/data/leaderboard.json`.
+- Test the engine hard (rule edge cases from rules.md make good test cases). Tests prove the code runs, not that the UI looks right, so for UI changes actually open it in a browser and look.
+- Commit each finished, test-green piece of work directly on `main`. Stage specific files, never `git add -A`.
+- Don't push unless asked.
+- No auto-commit hooks in this repo.
