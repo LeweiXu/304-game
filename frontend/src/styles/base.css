@@ -1,0 +1,82 @@
+/* Site-wide basics: type, nav, theme menu. Colours come from themes.css. */
+:root {
+  --font-body: 'Crimson Pro', Georgia, serif;
+  --font-heading: 'Inter', system-ui, sans-serif;
+  --nav-h: 56px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-padding-top: calc(var(--nav-h) + 24px); }
+body {
+  font-family: var(--font-body); font-size: 19px; line-height: 1.65;
+  background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
+}
+a { color: var(--link); text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+p, ul, ol { margin-bottom: 1em; }
+ul, ol { padding-left: 1.4em; }
+li { margin-bottom: .35em; }
+h1, h2, h3, h4 { font-family: var(--font-heading); line-height: 1.25; color: var(--text); }
+strong { font-weight: 700; }
+button { font: inherit; }
+
+/* nav */
+.nav {
+  position: sticky; top: 0; z-index: 20; height: var(--nav-h);
+  background: var(--nav); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border);
+}
+.nav-inner { height: 100%; display: flex; align-items: center; padding: 0 24px; }
+.brand {
+  font-family: var(--font-body); font-weight: 700; font-size: 28px; color: var(--accent);
+  text-decoration: none; letter-spacing: .06em; margin-right: auto;
+}
+.nav-links { display: flex; align-items: center; gap: 6px; }
+.nav-links > a {
+  font-family: var(--font-heading); font-size: .78rem; font-weight: 600; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted); text-decoration: none; padding: 6px 12px; border-radius: 999px;
+}
+.nav-links > a:hover { color: var(--text); }
+.nav-links > a.active { color: var(--accent); background: var(--accent-light); }
+.nav-links > a.cta { background: var(--accent); color: var(--surface); }
+.nav-links > a.cta.active { box-shadow: 0 0 0 2px var(--accent-light); }
+.icon-btn {
+  width: 36px; height: 36px; display: grid; place-items: center; border: 0; background: none;
+  color: var(--muted); border-radius: 8px; cursor: pointer;
+}
+.icon-btn:hover, .icon-btn[aria-expanded="true"] { background: var(--accent-light); color: var(--text); }
+.icon-btn svg { width: 18px; height: 18px; }
+
+/* theme menu */
+.theme-menu { position: relative; }
+.theme-pop {
+  position: absolute; right: 0; top: 44px; width: 280px; z-index: 30;
+  background: var(--elev); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 16px 40px var(--shadow); padding: 14px; font-family: var(--font-heading); font-size: .85rem;
+}
+.theme-pop fieldset { border: 0; }
+.theme-pop fieldset + fieldset { margin-top: 14px; }
+.theme-pop legend { font-weight: 600; color: var(--muted); font-size: .75rem; margin-bottom: 8px; }
+.theme-pop input { position: absolute; opacity: 0; pointer-events: none; }
+.theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.theme-opt {
+  display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--border); color: var(--text); font-weight: 500;
+}
+.theme-opt:hover { border-color: var(--muted); }
+.theme-opt.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.theme-opt:has(input:focus-visible), .mode-seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.swatch { display: flex; height: 28px; border-radius: 5px; overflow: hidden; border: 1px solid var(--border); }
+.swatch i { flex: 1; display: grid; place-items: center; }
+.swatch b { width: 12px; height: 12px; border-radius: 50%; }
+.mode-seg { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--row); border-radius: 8px; padding: 3px; }
+.mode-seg label { text-align: center; padding: 6px 0; border-radius: 6px; cursor: pointer; color: var(--muted); }
+.mode-seg label.on { background: var(--elev); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px var(--shadow); }
+
+@media (max-width: 560px) {
+  body { font-size: 18px; }
+  .nav-inner { padding: 0 12px; }
+  .nav-links { gap: 2px; }
+  .nav-links > a { padding: 6px 9px; letter-spacing: .04em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; scroll-behavior: auto !important; }
+}

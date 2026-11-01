@@ -7,21 +7,21 @@ This repo started as a fork of a friend's 304 project. That code is gone; only t
 ## Layout
 
 ```
-frontend/     browser app: UI, rules engine, bots. Everything needed for bot games.
-  public/     static assets Vite serves as-is (card art, fonts, favicon)
+frontend/     React + Vite + TS site: play page (game frame), rules page, themes. See frontend/README.md
   vercel.json, .env.*   Vercel config, API base url per environment
-backend/      multiplayer server. Just a health check until we do multiplayer.
+backend/      FastAPI app (main.py). Health check only until multiplayer.
   304-api.service   systemd user unit installed on the homeserver
-deploy.sh     pushes backend/ to the homeserver and restarts it
-docs/rules/   the rules. Source of truth for what the engine must do.
+engine/       the game engine and bots. Not created yet; built separately from the site work.
+deploy.sh     pushes backend/ to the homeserver, installs deps, restarts it
+docs/rules/   the rules. Source of truth for the engine and for the rules page.
 docs/DEPLOYMENT.md   how the hosting fits together
-design-*.html throwaway design mockups at the repo root, delete once a direction is picked
 ```
 
 ## Decisions so far
 
-- Frontend: React (Vite + TypeScript). Backend: FastAPI. The Node health-check script in `backend/` is a stand-in until the FastAPI app exists.
-- Look and feel follows the original site from the fork: parchment and cinnabar palette, Crimson Pro body text, Inter headings, light and dark themes. Adapt it, don't replace it.
+- Frontend: React (Vite + TypeScript). Backend: FastAPI. Engine: its own top-level `engine/`, worked on separately from the site.
+- Look and feel comes from the original site in the fork: Crimson Pro body, Inter headings, house-rule badges, § tags. Four colour themes (graphite default, parchment, tea, indigo), each with light and dark; users pick in the nav.
+- The rules page renders `docs/rules/rules.md` directly, so rules changes are markdown edits.
 - The play page will be a box for the game inside that site shell. Its design is still open.
 - Bots: a naive placeholder bot for now. Later the plan is RL-trained agents at several difficulty levels, so the engine has to be usable as a training environment (see below).
 
@@ -44,10 +44,10 @@ If code and these docs disagree, the docs win, or we change the docs on purpose 
 ## Hosting
 
 - Frontend: Vercel, root dir `frontend/`, at https://304.leweixu.com. Deploys on push to `main`.
-- Backend: homeserver (`homeserver` ssh alias) at `~/304_Project`, systemd user service `304-api` on port 8003, exposed as https://304-api.leweixu.com through the shared Cloudflare tunnel. Deploy with `./deploy.sh`. Node 18 on the server.
+- Backend: homeserver (`homeserver` ssh alias) at `~/304_Project`, systemd user service `304-api` on port 8003, exposed as https://304-api.leweixu.com through the shared Cloudflare tunnel. Deploy with `./deploy.sh`. Python 3.12 venv at `~/venv-304`, config in `~/304-api.env`.
 - Same setup as the logarium and webnovels projects in `~/personal_projects/`. Details in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-Local dev: `node backend/server.mjs` (port 8003); frontend `npm run dev` in `frontend/` once scaffolded (port 5173). See the README.
+Local dev: backend `uvicorn main:app --reload --port 8003` from the `~/venvs/304-venv` venv, frontend `npm run dev` (port 5173). Tests: `npm test` in frontend, `pytest` in backend. See the README.
 
 ## Working here
 
