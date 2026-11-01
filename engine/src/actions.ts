@@ -13,16 +13,20 @@ const TRUMP_BASE = DECLARE_BASE + 2;
 const PLAY_BASE = TRUMP_BASE + PACK.length;
 export const ACTION_COUNT = PLAY_BASE + PACK.length;
 
+// Lookup tables so encoding is a property read rather than a search.
+const CARD_INDEX = Object.fromEntries(PACK.map((c, i) => [c, i])) as Record<Card, number>;
+const BID_INDEX = Object.fromEntries(BID_VALUES.map((v, i) => [v, i])) as Record<number, number>;
+
 export function encodeAction(a: Action): number {
   switch (a.type) {
-    case 'bid': return BID_BASE + BID_VALUES.indexOf(a.value);
+    case 'bid': return BID_BASE + BID_INDEX[a.value];
     case 'pass':
     case 'partner':
     case 'redeal':
     case 'passOn': return SIMPLE_BASE + SIMPLE.indexOf(a.type);
     case 'declare': return DECLARE_BASE + (a.open ? 1 : 0);
-    case 'trump': return TRUMP_BASE + PACK.indexOf(a.card);
-    case 'play': return PLAY_BASE + PACK.indexOf(a.card);
+    case 'trump': return TRUMP_BASE + CARD_INDEX[a.card];
+    case 'play': return PLAY_BASE + CARD_INDEX[a.card];
   }
 }
 
@@ -35,9 +39,10 @@ export function decodeAction(i: number): Action {
   throw new Error(`No action ${i}`);
 }
 
-/** 1 where the action is legal for the player to move, else 0. */
-export function legalMask(g: GameState): Uint8Array {
-  const mask = new Uint8Array(ACTION_COUNT);
+/** 1 where the action is legal for the player to move, else 0. Pass `out` to reuse a buffer. */
+export function legalMask(g: GameState, out?: Uint8Array): Uint8Array {
+  const mask = out ?? new Uint8Array(ACTION_COUNT);
+  if (out) mask.fill(0);
   for (const a of legalActions(g)) mask[encodeAction(a)] = 1;
   return mask;
 }

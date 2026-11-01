@@ -28,3 +28,6 @@ Thumbs.db
 
 # Per-machine Claude Code settings
 .claude/settings.local.json
+
+# Engine benchmark build output
+engine/bench/.out/

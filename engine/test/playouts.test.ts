@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ACTION_COUNT, apply, decodeAction, encodeAction, handPoints, legalActions, legalMask, makeRng, mixSeed,
+  ACTION_COUNT, apply, cloneMatch, decodeAction, step, encodeAction, handPoints, legalActions, legalMask, makeRng, mixSeed,
   naiveBot, newMatch, nextGame, sameAction, toAct, viewFor, type Card, type MatchState,
 } from '../src';
 
@@ -76,6 +76,26 @@ describe('naive bot', () => {
 
   it('is deterministic for a given seed', () => {
     expect(botMatch(7)).toEqual(botMatch(7));
+  });
+});
+
+describe('step (in-place fast path)', () => {
+  it('produces exactly the same games as apply', () => {
+    for (let i = 0; i < 300; i++) {
+      const rng = makeRng(i + 7);
+      let pure = newMatch(i + 7);
+      const fast = cloneMatch(pure);
+      while (pure.game.phase !== 'over') {
+        const legal = legalActions(pure.game);
+        const a = legal[rng.int(legal.length)];
+        const before = JSON.stringify(pure);
+        const next = apply(pure, a);
+        expect(JSON.stringify(pure)).toBe(before); // apply never touches its input
+        step(fast, a);
+        pure = next;
+      }
+      expect(fast).toEqual(pure);
+    }
   });
 });
 

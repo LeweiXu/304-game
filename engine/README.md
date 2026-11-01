@@ -6,6 +6,7 @@ The 304 rules engine and bots. Pure TypeScript with no runtime dependencies, so 
 npm install
 npm test           # vitest: rule tests, worked examples from rules.md, random playouts, bot matches
 npm run typecheck
+npm run bench      # speed check (bundles bench/bench.ts with rolldown, runs it on Node)
 ```
 
 ## How it works
@@ -16,6 +17,8 @@ Everything goes through four functions in `src/game.ts`:
 - `toAct(game)` says whose decision it is.
 - `legalActions(game)` lists what they may do. This is the only authority on legality; the UI and bots only ever pick from it.
 - `apply(match, action)` returns a new match state. It never mutates its input and throws on an illegal action.
+
+`step(match, action)` is the fast path for training loops and search: it changes the match in place with no legality check and no copy, so only use it on a state you own with an action you know is legal (e.g. from `legalMask`). `cloneMatch` copies a state when you need to branch.
 
 `nextGame(match)` deals the next game once one is over. `viewFor(match, seat)` is what a seat is allowed to know: its own hand, public plays, and the trump suit only if it's the trumper or trump is open. Bots get a view, never the full state.
 

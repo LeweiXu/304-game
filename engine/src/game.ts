@@ -89,30 +89,48 @@ export function legalActions(g: GameState): Action[] {
   }
 }
 
-export const sameAction = (a: Action, b: Action): boolean => JSON.stringify(a) === JSON.stringify(b);
+export function sameAction(a: Action, b: Action): boolean {
+  if (a.type !== b.type) return false;
+  switch (a.type) {
+    case 'bid': return a.value === (b as typeof a).value;
+    case 'trump':
+    case 'play': return a.card === (b as typeof a).card;
+    case 'declare': return a.open === (b as typeof a).open;
+    default: return true;
+  }
+}
 
 export function isLegal(g: GameState, a: Action): boolean {
   return legalActions(g).some((l) => sameAction(l, a));
 }
 
-/** Applies the action for whoever is to move. Throws on an illegal action. */
+/** Applies the action for whoever is to move. Throws on an illegal action. Never changes `m`. */
 export function apply(m: MatchState, action: Action): MatchState {
   if (!isLegal(m.game, action)) throw new Error(`Illegal action ${JSON.stringify(action)} in phase ${m.game.phase}`);
-  const next = cloneMatch(m);
-  next.steps += 1;
-  const g = next.game;
+  return step(cloneMatch(m), action);
+}
+
+/**
+ * The fast path for training loops and search: applies the action by changing
+ * `m` in place, with no legality check and no copy. Only use it when you own
+ * `m` and already know the action is legal (e.g. it came from a legal mask).
+ * Returns `m`.
+ */
+export function step(m: MatchState, action: Action): MatchState {
+  m.steps += 1;
+  const g = m.game;
 
   switch (action.type) {
     case 'redeal':
-      finish(next, { kind: 'redeal', seat: g.bidding.speaker });
+      finish(m, { kind: 'redeal', seat: g.bidding.speaker });
       break;
     case 'passOn':
-      finish(next, { kind: 'passOn', reason: 'lowPoints8', seat: g.bidding.speaker });
+      finish(m, { kind: 'passOn', reason: 'lowPoints8', seat: g.bidding.speaker });
       break;
     case 'bid':
     case 'pass':
     case 'partner':
-      if (applySpeech(g, action)) endBidding(next);
+      if (applySpeech(g, action)) endBidding(m);
       break;
     case 'trump':
       chooseTrump(g, action.card);
@@ -121,14 +139,14 @@ export function apply(m: MatchState, action: Action): MatchState {
       declare(g, action.open);
       break;
     case 'play':
-      if (applyPlay(g, action.card)) score(next);
+      if (applyPlay(g, action.card)) score(m);
       break;
   }
-  return next;
+  return m;
 }
 
-/** Deep copy of the parts apply() may change. Plain data, so this is all it takes. */
-function cloneMatch(m: MatchState): MatchState {
+/** Deep copy of the parts step() may change. Plain data, so this is all it takes. */
+export function cloneMatch(m: MatchState): MatchState {
   const g = m.game;
   const b = g.bidding;
   return {
