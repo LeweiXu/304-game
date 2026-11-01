@@ -318,19 +318,17 @@ Winning **all 8 rounds** is called **Caps**. Winning all 304 points but losing a
 
 ### When to Call Caps
 
-A player **must** call Caps at the point where, given all information available to them (cards played, cards in hand, suits opponents are exhausted of, etc.), they have a **strategy** for playing their remaining cards that **guarantees** winning all remaining rounds, **for every distribution of unseen cards consistent with what they know**, and **for every legal way the other players could play.**
+A player **must** call Caps on their turn, at the **earliest turn** at which, given all information available to them (cards played, cards in hand, suits opponents are exhausted of, etc.), there is a **fixed order** for playing their remaining cards that **guarantees** their team wins all remaining rounds, **for every distribution of unseen cards consistent with what they know**, and **for every legal way the other players could play.**
 
-The strategy may be **adaptive** — the calling player may choose what to play in a later round based on what other players reveal in earlier rounds. There is no requirement to commit to a single fixed sequence of cards in advance.
-
-> **[Adaptive — codified at this group's table]** Earlier wordings required a "specific order" of play, fixed at the moment of the call; the adaptive rule formalises the table's long-standing practice of validating branching calls.
+When calling Caps, the player must **declare that order**: the exact sequence in which they will play every card left in their hand. The declared order is **binding**. The player may not change it later in response to what the other players reveal, and the call is judged on whether that one order wins every remaining round.
 
 The critical distinction is between **choice** and **deducible certainty**. You cannot rely on your partner making an optimal or intelligent play — you cannot assume they will *choose* to play a particular card when they have options. However, if you can **deduce** from the cards played that your partner holds a specific card, and the rules force a guaranteed outcome (e.g. your partner holds the last remaining card of a suit and must therefore win a round when that suit is led), then you **can** factor that into a Caps call. The test is whether the outcome is guaranteed by the rules alone, not by hoping your partner plays well.
 
 This is what makes Caps genuinely difficult. It requires not just tracking your own hand, but deducing the state of all hands from the history of play, and identifying that *some* winning line exists in every consistent world.
 
-When calling Caps, the player puts their cards down and may state **one demonstration line** of play — *"this is one way I can win every remaining round"*. The opposition may scrutinise to verify there are no holes in the claim. If opp play during the called sequence diverges from the player's stated line, the player may continue with any other winning continuation; the demonstration line is not a binding commitment, only an opening move-set offered for clarity.
+When calling Caps, the player puts their cards down and states the order. The opposition may scrutinise it to verify there are no holes: if some consistent distribution of the unseen cards, or some legal play by another player, would beat the declared order in any remaining round, the call is Wrong (or Early) Caps, even if a *different* order would have worked.
 
-In strict play, Caps should be called on the precise card at which certainty is first achieved — potentially mid-round. In practice, calling Caps before the calling player makes their next play is acceptable, giving a brief grace period to recognise the situation.
+The obligation is checked on the player's own turns. The **first opportunity** is the first of their turns at which a guaranteed order exists; Caps should be called then, before playing the card for that turn. Calling on any later turn is Late Caps.
 
 **Caps cannot be called after the final card of round 8 is played.** Once the game ends, the call window is closed. Scrutiny may retroactively determine that a Caps situation was missed and apply Late Caps (see below), but no new call can be made.
 
@@ -365,18 +363,16 @@ In strict play, Caps should be called on the precise card at which certainty is 
 >
 > Note: If you merely *suspected* your partner held the J♦ but could not deduce it with certainty, this would **not** be grounds for Caps.
 
-> **Worked Example — Caps via Adaptive Play (no fixed order required)**
+> **Worked Example — No fixed order, no Caps**
 >
-> Some genuinely cap-callable hands have *no fixed order* that wins in every consistent world. The adaptive rule covers them.
+> Some hands would win every remaining round if you could decide later rounds after seeing how the others play, but have **no single order** that wins in every consistent world.
 >
 > **Shape of the situation.** You hold trump and side-suit kings. Opps are void in your side suits and hold one outstanding higher trump (say J♥) plus one card you haven't pinned to a seat. Whichever opp turns out to hold the J♥ matters.
 >
 > - If you commit to leading trump first, the world where opp holds the higher trump beats you.
-> - If you commit to leading a side-suit king first, the void opp may discard their higher trump under your king, or save it for later — different worlds suggest different responses.
+> - If you commit to leading a side-suit king first, the void opp may discard their higher trump under your king, or save it for later, and the order that wins depends on which they do.
 >
-> **Adaptive resolution.** Your strategy is "lead the side-suit king that draws the discard I need to see; *then*, depending on which trump the opp threw, lead trump or the other side-suit king to mop up." Mid-line you branch — *"if east plays the higher trump I play A; if east plays the other card I play B"*. Every consistent world is covered by some legal continuation.
->
-> **You may call Caps**, even though you cannot pre-commit to a single fixed permutation. State *one* demonstration line for clarity (typically the most informative opening); if opp play diverges, continue with the line that handles the world they revealed. *The obligation is the existence of a per-world winning strategy — not a single sequence that wins in every world.*
+> **This is not Caps.** You would need to branch (*"if east plays the higher trump I play A; otherwise B"*), and a Caps call has to declare one fixed order up front. Keep playing; if later rounds settle the uncertainty so that a fixed order does guarantee the sweep, your obligation to call starts on that turn.
 
 ### Correct Caps
 
@@ -412,7 +408,7 @@ In strict play, Caps should be called on the precise card at which certainty is 
 - **§C-13 Correct External Caps before the start of Round 7.** The external team's win is bumped — the betting team gives **+1 additional stone** on top of the normal loss (e.g. on a 160 bid, betting team gives 2 + 1 = 3 stone to the external team).
 - **§C-14 Correct External Caps in or after Round 7.** No bonus — normal opposition win is scored, betting team gives the usual stone for the bid amount.
 - **§C-15 Late External Caps.** The external team won all 8 rounds but, in scrutiny's judgement, had a first opportunity to call Caps during play and missed it. Even though they won every round physically, they **lose** the game on the technicality, and the betting team takes a **win + 1 stone** outcome (e.g. on Honest, betting team gives 2 + 1 = 3 stone *to the external team*). Harsh by design — External Caps is not optional when you can see it.
-- **§C-16 Wrong External Caps.** The external team called Caps but the call doesn't hold up under scrutiny (no winning adaptive strategy exists, or the external team had not in fact won every round). The external team takes a **5-stone penalty** (receives 5 stone).
+- **§C-16 Wrong External Caps.** The external team called Caps but the call doesn't hold up under scrutiny (the declared order doesn't guarantee every remaining round, or the external team had not in fact won every round). The external team takes a **5-stone penalty** (receives 5 stone).
 
 ### Summary of Caps Outcomes
 
@@ -588,7 +584,7 @@ Terms are ordered to minimise forward references. Terms in **bold** within defin
 
 **Minus:** In Closed Trump, when a player (typically the Trumper) cannot follow the **Led Suit** and chooses to play a non-Trump, non-led-suit card face down. This concedes the round but may be strategically useful (e.g. discarding constraints while the partner is winning).
 
-**Caps:** Winning all 8 rounds in a game. Must be called at the first opportunity where a player can guarantee the outcome — through their own cards and any outcomes deducible from the rules, but not relying on any player's choice. Cannot be called after the final card of round 8.
+**Caps:** Winning all 8 rounds in a game. Must be called on the caller's turn, at the first turn where a fixed order of their remaining cards guarantees the outcome — through their own cards and any outcomes deducible from the rules, but not relying on any player's choice. The caller declares that order, and it is binding. Cannot be called after the final card of round 8.
 
 **Correct Caps:** Calling Caps at the first opportunity, correctly. Rewards +1 stone if called before the start of Round 7; no bonus thereafter.
 
